@@ -282,7 +282,7 @@ int list_spells(bool toggle_with_I, bool viewing, bool allow_preselect,
     }
 }
 
-static int _apply_spellcasting_success_boosts(spell_type spell, int chance)
+static double _apply_spellcasting_success_boosts(spell_type spell, double chance)
 {
     int fail_reduce = 100;
 
@@ -308,17 +308,40 @@ static int _apply_spellcasting_success_boosts(spell_type spell, int chance)
     return chance * fail_reduce / 100;
 }
 
+double chance_break(double chance)
+{
+        // Formulas used:
+        // Chance > 0: 0.0042*x*x  + 0.1919 * x + 27.6572
+        // Chance <= 0 && > -50 : 0.0022*x*x + 0.4221*x + 28.8257
+        // Chance <= -50 && > -180 : 0.1000x + 18.0000
+        // Chance <= -180 : 0
+        if (chance > 0)
+        {
+                return 0.0042*chance*chance + 0.1919*chance + 27.6572;
+        }
+        else if (chance <= 0 && chance > -50)
+        {
+                return 0.0022*chance*chance + 0.4221*chance + 28.8257;
+        }
+        else if (chance <= -50 && chance >= -180)
+        {
+                return 0.1000*chance + 18.0000;
+        }
+        else
+        {
+                return 0;
+        }
+}
+
 int raw_spell_fail(spell_type spell)
 {
-    int chance = 60;
-
+    int chance = 60*10;
     // Don't cap power for failure rate purposes.
-    chance -= 6 * calc_spell_power(spell, false, true, false);
-    chance -= (you.intel() * 2);
-
+    chance -= 6 * calc_spell_power_double(spell, false, true, false);
+    chance -= (you.intel() * 2)*10;
     const int armour_shield_penalty = player_armour_shield_spell_penalty();
     dprf("Armour+Shield spell failure penalty: %d", armour_shield_penalty);
-    chance += armour_shield_penalty;
+    chance += armour_shield_penalty*10;
 
     static const int difficulty_by_level[] =
     {
@@ -337,7 +360,7 @@ int raw_spell_fail(spell_type spell)
     };
     const int spell_level = spell_difficulty(spell);
     ASSERT_RANGE(spell_level, 0, (int) ARRAYSZ(difficulty_by_level));
-    chance += difficulty_by_level[spell_level];
+    chance += difficulty_by_level[spell_level]*10;
 
 #if TAG_MAJOR_VERSION == 34
     // Only apply this penalty to Dj because other species lose nutrition
@@ -355,8 +378,7 @@ int raw_spell_fail(spell_type spell)
     }
 #endif
 
-    int chance2 = chance;
-
+    double chance2 = chance/10;
     const int chance_breaks[][2] =
     {
         {45, 45}, {42, 43}, {38, 41}, {35, 40}, {32, 38}, {28, 36},
@@ -366,9 +388,7 @@ int raw_spell_fail(spell_type spell)
         {-160, 2}, {-180, 0}
     };
 
-    for (const int (&cbrk)[2] : chance_breaks)
-        if (chance < cbrk[0])
-            chance2 = cbrk[1];
+    chance2 = chance_break(chance2);
 
     chance2 += get_form()->spellcasting_penalty;
 
@@ -388,6 +408,70 @@ int raw_spell_fail(spell_type spell)
         chance2 = 100;
 
     return chance2;
+}
+
+double calc_spell_power_double(spell_type spell, bool apply_intel, bool fail_rate_check,
+        bool cap_power, bool rod)
+{
+        double power = 0;
+        if (rod)
+                power = 5 + you.skill(SK_EVOCATIONS, 3);
+        else
+        {
+                const spschools_type disciplines = get_spell_disciplines(spell);
+
+                int skillcount = count_bits(disciplines);
+                if (skillcount)
+                {
+                        for (const auto bit : spschools_type::range())
+                                if (disciplines & bit)
+                                        power += you.skill(spell_type2skill(bit), 200);
+                        power /= skillcount;
+                }
+
+                power += you.skill(SK_SPELLCASTING, 50);
+
+                // Brilliance boosts spell power a bit (equivalent to three
+                // spell school levels).
+                if (!fail_rate_check && you.duration[DUR_BRILLIANCE])
+                        power += 600;
+
+                if (apply_intel)
+                        power = (power * you.intel()) / 10;
+
+                // [dshaligram] Enhancers don't affect fail rates any more, only spell
+                // power. Note that this does not affect Vehumet's boost in castability.
+                if (!fail_rate_check)
+                        power = _apply_enhancement(spell, power);
+
+                // Wild magic boosts spell power but decreases success rate.
+                if (!fail_rate_check)
+                {
+                        power *= (10 + 5 * player_mutation_level(MUT_WILD_MAGIC));
+                        power /= (10 + 5 * player_mutation_level(MUT_SUBDUED_MAGIC));
+                }
+
+                // Augmentation boosts spell power at high HP.
+                if (!fail_rate_check)
+                {
+                        power *= 10 + 4 * augmentation_amount();
+                        power /= 10;
+                }
+
+                // Each level of horror reduces spellpower by 10%
+                if (you.duration[DUR_HORROR] && !fail_rate_check)
+                {
+                        power *= 10;
+                        power /= 10 + (you.props[HORROR_PENALTY_KEY].get_int() * 3) / 2;
+                }
+                power = stepdown_value(power / 10, 50 * 10, 50 * 10, 150 * 10, 200 * 10);
+        }
+
+        const double cap = spell_power_cap(spell) * 10;
+        if (cap > 0 && cap_power)
+                power = min(power, cap);
+
+        return power;
 }
 
 int calc_spell_power(spell_type spell, bool apply_intel, bool fail_rate_check,
@@ -444,8 +528,7 @@ int calc_spell_power(spell_type spell, bool apply_intel, bool fail_rate_check,
             power *= 10;
             power /= 10 + (you.props[HORROR_PENALTY_KEY].get_int() * 3) / 2;
         }
-
-        power = stepdown_value(power / 100, 50, 50, 150, 200);
+        power = stepdown_value(power/100, 50, 50, 150, 200);
     }
 
     const int cap = spell_power_cap(spell);
