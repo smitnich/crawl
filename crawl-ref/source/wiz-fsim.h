@@ -20,4 +20,6 @@ struct fight_data
 void wizard_quick_fsim();
 void wizard_fight_sim(bool double_scale);
 
+void weapon_sim(const item_def &item, const int slot);
+
 #endif

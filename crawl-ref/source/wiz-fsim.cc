@@ -238,6 +238,50 @@ static bool _fsim_kit_equip(const string &kit, string &error)
 }
 
 // fight simulator internals
+static monster* _init_fsim(monster_type mtype)
+{
+	monster * mon = nullptr;
+
+	mgen_data temp = mgen_data::hostile_at(mtype, "fightsim", false, 0, 0,
+		you.pos(), MG_DONT_COME);
+
+	temp.extra_flags |= MF_HARD_RESET | MF_NO_REWARD;
+	mon = create_monster(temp);
+	if (!mon)
+	{
+		mpr("Failed to create monster.");
+		return nullptr;
+	}
+
+	// move the monster next to the player
+	// this probably works best in the arena, or at least somewhere
+	// where there's no water or anything weird to interfere
+	if (!adjacent(mon->pos(), you.pos()))
+	{
+		for (adjacent_iterator ai(you.pos()); ai; ++ai)
+			if (mon->move_to_pos(*ai))
+				break;
+	}
+
+	if (!adjacent(mon->pos(), you.pos()))
+	{
+		monster_die(mon, KILL_DISMISSED, NON_MONSTER);
+		mpr("Could not put monster adjacent to player.");
+		return 0;
+	}
+
+	// prevent distracted stabbing
+	mon->foe = MHITYOU;
+	// this line is actually kind of important for distortion now
+	mon->hit_points = mon->max_hit_points = MAX_MONSTER_HP;
+	mon->behaviour = BEH_SEEK;
+
+	redraw_screen();
+
+	return mon;
+}
+
+// fight simulator internals
 static monster* _init_fsim()
 {
     monster * mon = nullptr;
@@ -710,6 +754,36 @@ void wizard_fight_sim(bool double_scale)
 
     _uninit_fsim(mon);
     mpr("Done.");
+}
+
+void weapon_sim(const item_def &item, const int slot)
+{
+	const vector<vector<monster_type>> test_mons = { { MONS_NO_DEFENSE_TEST, MONS_NO_DEFENSE_TEST_RES },
+	{ MONS_EV_TEST, MONS_EV_TEST_RES }, { MONS_AC_TEST, MONS_AC_TEST_RES }, { MONS_DEFENSE_TEST, MONS_DEFENSE_TEST_RES } };
+	const int orig_slot = you.equip[EQ_WEAPON];
+	const item_def *orig_wep = you.weapon();
+	string output_str = "";
+	mprf("%s:", item.name(DESC_YOUR).c_str());
+	const brand_type brand = get_weapon_brand(item);
+	int mon_count = (brand == SPWPN_FLAMING || brand == SPWPN_FREEZING ||
+		brand == SPWPN_HOLY_WRATH || brand == SPWPN_ELECTROCUTION) ? 2 : 1;
+	if (orig_wep != &item)
+	{
+		wield_weapon(true, slot, false, true, false, false, false);
+	}
+	for (vector<monster_type> mt : test_mons) {
+		output_str = make_stringf("");
+		for (int i = 0; i < mon_count; i++)
+		{
+			monster *mon = _init_fsim(mt[i]);
+			fight_data fdata = _get_fight_data(*mon, 1000, false);
+			output_str = make_stringf("%s%s: Damage: %.2f    ", output_str.data(), mon->name(DESC_PLAIN).c_str(), fdata.av_eff_dam);
+			_uninit_fsim(mon);
+		}
+		mprf_nojoin("%s", output_str.data());
+	}
+	if (orig_wep != &item)
+		wield_weapon(true, orig_slot, false, false, false, false);
 }
 
 #endif

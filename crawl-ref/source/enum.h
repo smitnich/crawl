@@ -994,6 +994,7 @@ enum command_type
     CMD_SAVE_GAME_NOW,
     CMD_SUSPEND_GAME,
     CMD_QUIT,
+	CMD_SIMULATE_WEAPON,
     CMD_WIZARD,
     CMD_EXPLORE_MODE,
 
@@ -3418,7 +3419,14 @@ enum monster_type                      // menv[].type
     MONS_MUTANT_BEAST,
     MONS_JUGGERNAUT,
 #endif
-
+	MONS_NO_DEFENSE_TEST,
+	MONS_EV_TEST,
+	MONS_AC_TEST,
+	MONS_DEFENSE_TEST,
+	MONS_NO_DEFENSE_TEST_RES,
+	MONS_EV_TEST_RES,
+	MONS_AC_TEST_RES,
+	MONS_DEFENSE_TEST_RES,
     NUM_MONSTERS,               // used for polymorph
 
     // MONS_NO_MONSTER can get put in savefiles, so it shouldn't change

@@ -65,6 +65,7 @@
  #include "tilereg-crt.h"
 #endif
 #include "unicode.h"
+#include "wiz-fsim.h"
 
 int count_desc_lines(const string &_desc, const int width)
 {
@@ -2231,6 +2232,7 @@ static command_type _get_action(int key, vector<command_type> actions)
     static map<command_type, int> act_key;
     if (act_key_init)
     {
+		act_key[CMD_SIMULATE_WEAPON]    = 's';
         act_key[CMD_WIELD_WEAPON]       = 'w';
         act_key[CMD_UNWIELD_WEAPON]     = 'u';
         act_key[CMD_QUIVER_ITEM]        = 'q';
@@ -2266,6 +2268,7 @@ static bool _actions_prompt(item_def &item, bool allow_inscribe, bool do_prompt)
     PrecisionMenu menu;
     TextItem* tmp = nullptr;
     MenuFreeform* freeform = new MenuFreeform();
+	item_def *orig_wep;
     menu.set_select_type(PrecisionMenu::PRECISION_SINGLESELECT);
     freeform->init(coord_def(1, 1),
                    coord_def(get_number_of_cols(), get_number_of_lines()),
@@ -2286,6 +2289,7 @@ static bool _actions_prompt(item_def &item, bool allow_inscribe, bool do_prompt)
     switch (item.base_type)
     {
     case OBJ_WEAPONS:
+		actions.push_back(CMD_SIMULATE_WEAPON);
     case OBJ_STAVES:
     case OBJ_RODS:
     case OBJ_MISCELLANY:
@@ -2360,6 +2364,7 @@ static bool _actions_prompt(item_def &item, bool allow_inscribe, bool do_prompt)
         act_str[CMD_DROP]               = "(d)rop";
         act_str[CMD_INSCRIBE_ITEM]      = "(i)nscribe";
         act_str[CMD_ADJUST_INVENTORY]   = "(=)adjust";
+		act_str[CMD_SIMULATE_WEAPON]    = "(s)imulate";
         act_str_init = false;
     }
 
@@ -2421,6 +2426,8 @@ static bool _actions_prompt(item_def &item, bool allow_inscribe, bool do_prompt)
 
     const int slot = item.link;
     ASSERT_RANGE(slot, 0, ENDOFPACK);
+
+	int orig_slot = 0;
 
     switch (action)
     {
@@ -2488,6 +2495,9 @@ static bool _actions_prompt(item_def &item, bool allow_inscribe, bool do_prompt)
     case CMD_ADJUST_INVENTORY:
         _adjust_item(item);
         return false;
+	case CMD_SIMULATE_WEAPON:
+		weapon_sim(item,slot);
+		return true;
     case CMD_NO_CMD:
     default:
         return true;
