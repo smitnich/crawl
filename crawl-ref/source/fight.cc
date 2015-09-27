@@ -93,7 +93,7 @@ static bool _autoswitch_to_melee()
  *
  * @return Whether the attack took time (i.e. wasn't cancelled).
  */
-bool fight_melee(actor *attacker, actor *defender, bool *did_hit, bool simu)
+bool fight_melee(actor *attacker, actor *defender, bool *did_hit, bool simu, bool random, double *hit_chance)
 {
     ASSERT(attacker); // XXX: change to actor &attacker
     ASSERT(defender); // XXX: change to actor &defender
@@ -159,7 +159,7 @@ bool fight_melee(actor *attacker, actor *defender, bool *did_hit, bool simu)
             return false;
         }
 
-        if (!attk.attack())
+        if (!attk.attack(random, hit_chance))
         {
             // Attack was cancelled or unsuccessful...
             if (attk.cancel_attack)
@@ -307,7 +307,7 @@ bool fight_melee(actor *attacker, actor *defender, bool *did_hit, bool simu)
 
         // If the attack fails out, keep effective_attack_number up to
         // date so that we don't cause excess energy loss in monsters
-        if (!melee_attk.attack())
+        if (!melee_attk.attack(random))
             effective_attack_number = melee_attk.effective_attack_number;
         else if (did_hit && !(*did_hit))
             *did_hit = melee_attk.did_hit;

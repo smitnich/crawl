@@ -368,7 +368,7 @@ static void _uninit_fsim(monster *mon)
     reset_training();
 }
 
-static fight_data _get_fight_data(monster &mon, int iter_limit, bool defend)
+static fight_data _get_fight_data(monster &mon, int iter_limit, bool defend, bool random = true)
 {
     const monster orig = mon;
     unsigned int cumulative_damage = 0;
@@ -755,7 +755,6 @@ void wizard_fight_sim(bool double_scale)
     _uninit_fsim(mon);
     mpr("Done.");
 }
-
 void weapon_sim(const item_def &item, const int slot)
 {
 	const vector<vector<monster_type>> test_mons = { { MONS_NO_DEFENSE_TEST, MONS_NO_DEFENSE_TEST_RES },
@@ -776,8 +775,10 @@ void weapon_sim(const item_def &item, const int slot)
 		for (int i = 0; i < mon_count; i++)
 		{
 			monster *mon = _init_fsim(mt[i]);
-			fight_data fdata = _get_fight_data(*mon, 1000, false);
-			output_str = make_stringf("%s%s: Damage: %.2f    ", output_str.data(), mon->name(DESC_PLAIN).c_str(), fdata.av_eff_dam);
+			double hit_chance = 0.0f;
+			fight_melee(&you, mon, nullptr, true, false, &hit_chance);
+			int damage = (mon->max_hit_points - mon->hit_points);
+			output_str = make_stringf("%s%s: Damage: %d (Hit rate=%f)", output_str.data(), mon->name(DESC_PLAIN).c_str(), damage, hit_chance);
 			_uninit_fsim(mon);
 		}
 		mprf_nojoin("%s", output_str.data());

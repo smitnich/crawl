@@ -25,7 +25,7 @@ private:
     bool handle_phase_attempted() override;
     bool handle_phase_blocked() override;
     bool handle_phase_dodged() override;
-    bool handle_phase_hit() override;
+    bool handle_phase_hit(bool random = true) override;
 
     /* Combat Calculations */
     bool using_weapon() override;

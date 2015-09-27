@@ -200,7 +200,7 @@ int attack::calc_to_hit(bool random)
             }
         }
 
-        // slaying bonus
+		// slaying bonus
         mhit += slaying_bonus(wpn_skill == SK_THROWING
                               || (weapon && is_range_weapon(*weapon)
                                          && using_weapon()));
@@ -212,6 +212,12 @@ int attack::calc_to_hit(bool random)
         // hunger penalty
         if (you.hunger_state <= HS_STARVING)
             mhit -= 3;
+
+		attacker_armour_tohit_penalty =
+			round(attacker->armour_tohit_penalty(false, 20)/20);
+
+		attacker_shield_tohit_penalty =
+			round(attacker->shield_tohit_penalty(false, 20) / 20);
 
         // armour penalty
         mhit -= (attacker_armour_tohit_penalty + attacker_shield_tohit_penalty);
@@ -1222,15 +1228,15 @@ string attack::defender_name(bool allow_reflexive)
         return def_name(DESC_THE);
 }
 
-int attack::player_stat_modify_damage(int damage)
+int attack::player_stat_modify_damage(int damage, bool random)
 {
     int dammod = 39;
     const int dam_stat_val = calc_stat_to_dam_base();
 
     if (dam_stat_val > 11)
-        dammod += (random2(dam_stat_val - 11) * 2);
+        dammod += (maybe_random2(dam_stat_val - 11, random) * 2);
     else if (dam_stat_val < 9)
-        dammod -= (random2(9 - dam_stat_val) * 3);
+        dammod -= (maybe_random2(9 - dam_stat_val, random) * 3);
 
     damage *= dammod;
     damage /= 39;
@@ -1238,22 +1244,22 @@ int attack::player_stat_modify_damage(int damage)
     return damage;
 }
 
-int attack::player_apply_weapon_skill(int damage)
+int attack::player_apply_weapon_skill(int damage, bool random)
 {
     if (using_weapon())
     {
-        damage *= 2500 + (random2(you.skill(wpn_skill, 100) + 1));
+        damage *= 2500 + (maybe_random2(you.skill(wpn_skill, 100) + 1, random));
         damage /= 2500;
     }
 
     return damage;
 }
 
-int attack::player_apply_fighting_skill(int damage, bool aux)
+int attack::player_apply_fighting_skill(int damage, bool aux, bool random)
 {
     const int base = aux? 40 : 30;
 
-    damage *= base * 100 + (random2(you.skill(SK_FIGHTING, 100) + 1));
+    damage *= base * 100 + (maybe_random2(you.skill(SK_FIGHTING, 100) + 1, random));
     damage /= base * 100;
 
     return damage;
@@ -1278,7 +1284,7 @@ int attack::get_weapon_plus()
 
 // Slaying and weapon enchantment. Apply this for slaying even if not
 // using a weapon to attack.
-int attack::player_apply_slaying_bonuses(int damage, bool aux)
+int attack::player_apply_slaying_bonuses(int damage, bool aux, bool random)
 {
     int damage_plus = 0;
     if (!aux && using_weapon())
@@ -1291,8 +1297,8 @@ int attack::player_apply_slaying_bonuses(int damage, bool aux)
                                  || (weapon && is_range_weapon(*weapon)
                                             && using_weapon()));
 
-    damage += (damage_plus > -1) ? (random2(1 + damage_plus))
-                                 : (-random2(1 - damage_plus));
+    damage += (damage_plus > -1) ? (maybe_random2(1 + damage_plus, random))
+                                 : (-maybe_random2(1 - damage_plus, random));
     return damage;
 }
 
@@ -1366,7 +1372,7 @@ int attack::calc_stat_to_dam_base()
     return you.strength() + (you.dex() - you.strength()) * weight / 20;
 }
 
-int attack::calc_damage()
+int attack::calc_damage(bool random)
 {
     if (attacker->is_monster())
     {
@@ -1413,14 +1419,14 @@ int attack::calc_damage()
         potential_damage = using_weapon() || wpn_skill == SK_THROWING
             ? weapon_damage() : calc_base_unarmed_damage();
 
-        potential_damage = player_stat_modify_damage(potential_damage);
+        potential_damage = player_stat_modify_damage(potential_damage, random);
 
-        damage = random2(potential_damage+1);
+		damage = maybe_random2(potential_damage + 1, random);
 
-        damage = player_apply_weapon_skill(damage);
-        damage = player_apply_fighting_skill(damage, false);
+        damage = player_apply_weapon_skill(damage, random);
+        damage = player_apply_fighting_skill(damage, false, random);
         damage = player_apply_misc_modifiers(damage);
-        damage = player_apply_slaying_bonuses(damage, false);
+        damage = player_apply_slaying_bonuses(damage, false, random);
         damage = player_stab(damage);
         // A failed stab may have awakened monsters, but that could have
         // caused the defender to cease to exist (spectral weapons with
@@ -1431,7 +1437,7 @@ int attack::calc_damage()
         if (!defender->alive())
             return 0;
         damage = player_apply_final_multipliers(damage);
-        damage = apply_defender_ac(damage);
+        damage = apply_defender_ac(damage, 0, random);
 
         damage = max(0, damage);
         set_attack_verb(damage);
@@ -1462,7 +1468,7 @@ int attack::test_hit(int to_land, int ev, bool randomise_ev)
     return margin;
 }
 
-int attack::apply_defender_ac(int damage, int damage_max) const
+int attack::apply_defender_ac(int damage, int damage_max, bool random) const
 {
     ASSERT(defender);
     int stab_bypass = 0;
@@ -1472,7 +1478,7 @@ int attack::apply_defender_ac(int damage, int damage_max) const
         stab_bypass = random2(div_rand_round(stab_bypass, 100 * stab_bonus));
     }
     int after_ac = defender->apply_ac(damage, damage_max,
-                                      AC_NORMAL, stab_bypass);
+                                      AC_NORMAL, stab_bypass, random);
     dprf(DIAG_COMBAT, "AC: att: %s, def: %s, ac: %d, gdr: %d, dam: %d -> %d",
                  attacker->name(DESC_PLAIN, true).c_str(),
                  defender->name(DESC_PLAIN, true).c_str(),

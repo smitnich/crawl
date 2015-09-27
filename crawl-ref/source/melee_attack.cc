@@ -354,7 +354,7 @@ void melee_attack::apply_black_mark_effects()
  *
  * Returns true if combat should continue, false if it should end here.
  */
-bool melee_attack::handle_phase_hit()
+bool melee_attack::handle_phase_hit(bool random)
 {
     did_hit = true;
     perceived_attack = true;
@@ -413,7 +413,7 @@ bool melee_attack::handle_phase_hit()
     // messages, etc. It also wakes nearby creatures on a failed stab,
     // meaning it could have made the attacked creature vanish. That
     // will be checked early in player_monattack_hit_effects
-    damage_done += calc_damage();
+    damage_done += calc_damage(random);
 
     bool stop_hit = false;
     // Check if some hit-effect killed the monster.
@@ -727,7 +727,7 @@ bool melee_attack::handle_phase_end()
  *      the defender or attacker dying during the attack? or a defender moving
  *      from its starting position.
  */
-bool melee_attack::attack()
+bool melee_attack::attack(bool random, double *hit_chance)
 {
     if (!cleaving && !handle_phase_attempted())
         return false;
@@ -770,7 +770,18 @@ bool melee_attack::attack()
     // Calculate various ev values and begin to check them to determine the
     // correct handle_phase_ handler.
     const int ev = defender->evasion(EV_IGNORE_NONE, attacker);
-    ev_margin = test_hit(to_hit, ev, !attacker->is_player());
+	// If we're doing deterministic damage, always hit her
+	// We'll calculate the hit chance and multiply by it later
+	if (random)
+		ev_margin = test_hit(to_hit, ev, !attacker->is_player());
+	else
+	{
+		if (hit_chance != nullptr)
+		{
+			to_hit = calc_to_hit(false) * 2;
+			*hit_chance = (MIN_HIT_MISS_PERCENTAGE / 2.0 + (100.0 - MIN_HIT_MISS_PERCENTAGE)*(to_hit - ev) / (to_hit)) / 100.0;
+		}
+	}
     bool shield_blocked = attack_shield_blocked(true);
 
     // Stuff for god conduct, this has to remain here for scope reasons.
@@ -823,7 +834,7 @@ bool melee_attack::attack()
                 return false;
             }
 
-            bool cont = handle_phase_hit();
+            bool cont = handle_phase_hit(random);
 
             attacker_sustain_passive_damage();
 
@@ -3707,13 +3718,13 @@ int melee_attack::apply_damage_modifiers(int damage, int damage_max)
     return damage;
 }
 
-int melee_attack::calc_damage()
+int melee_attack::calc_damage(bool random)
 {
     // Constriction deals damage over time, not when grabbing.
     if (attk_flavour == AF_CRUSH)
         return 0;
 
-    return attack::calc_damage();
+    return attack::calc_damage(random);
 }
 
 /* TODO: This code is only used from melee_attack methods, but perhaps it

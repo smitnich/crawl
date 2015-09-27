@@ -41,7 +41,7 @@ public:
                  coord_def attack_pos = coord_def(0, 0));
 
     // Applies attack damage and other effects.
-    bool attack();
+    bool attack(bool random = true, double *hit_chance = nullptr);
 
     // To-hit is a function of attacker/defender, inherited from attack
     int calc_to_hit(bool random = true) override;
@@ -52,7 +52,7 @@ private:
     /* Attack phases */
     bool handle_phase_attempted() override;
     bool handle_phase_dodged() override;
-    bool handle_phase_hit() override;
+    bool handle_phase_hit(bool random = true) override;
     bool handle_phase_damaged() override;
     bool handle_phase_aux(); // specific to melee attacks
     bool handle_phase_killed() override;
@@ -63,7 +63,7 @@ private:
     int weapon_damage() override;
     int calc_mon_to_hit_base() override;
     int apply_damage_modifiers(int damage, int damage_max) override;
-    int calc_damage() override;
+    int calc_damage(bool random = true) override;
 
     /* Attack effects */
     void check_autoberserk();

@@ -25,7 +25,7 @@ enum stab_type
 };
 
 bool fight_melee(actor *attacker, actor *defender, bool *did_hit = nullptr,
-                 bool simu = false);
+                 bool simu = false, bool random = true, double *hit_chance = nullptr);
 
 int resist_adjust_damage(const actor *defender, beam_type flavour,
                          int rawdamage);

@@ -269,7 +269,7 @@ bool ranged_attack::handle_phase_dodged()
     return true;
 }
 
-bool ranged_attack::handle_phase_hit()
+bool ranged_attack::handle_phase_hit(bool random)
 {
     // XXX: this kind of hijacks the shield block check
     if (!attack_ignores_shield(false))

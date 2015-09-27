@@ -118,7 +118,7 @@ protected:
     virtual bool handle_phase_attempted();
     virtual bool handle_phase_dodged() = 0;
     virtual bool handle_phase_blocked();
-    virtual bool handle_phase_hit() = 0;
+    virtual bool handle_phase_hit(bool random = true) = 0;
     virtual bool handle_phase_damaged();
     virtual bool handle_phase_killed();
     virtual bool handle_phase_end();
@@ -132,9 +132,9 @@ protected:
     int calc_stat_to_dam_base();
     virtual int calc_mon_to_hit_base() = 0;
     virtual int apply_damage_modifiers(int damage, int damage_max) = 0;
-    virtual int calc_damage();
+    virtual int calc_damage(bool random = true);
     int test_hit(int to_hit, int ev, bool randomise_ev);
-    int apply_defender_ac(int damage, int damage_max = 0) const;
+    int apply_defender_ac(int damage, int damage_max = 0, bool random = true) const;
     bool attack_warded_off();
     // Determine if we're blocking (partially or entirely)
     virtual bool attack_shield_blocked(bool verbose);
@@ -185,11 +185,11 @@ protected:
 
     attack_flavour random_chaos_attack_flavour();
 
-    virtual int  player_stat_modify_damage(int damage);
-    virtual int  player_apply_weapon_skill(int damage);
-    virtual int  player_apply_fighting_skill(int damage, bool aux);
-    virtual int  player_apply_misc_modifiers(int damage);
-    virtual int  player_apply_slaying_bonuses(int damage, bool aux);
+	virtual int  player_stat_modify_damage(int damage, bool random = true);
+    virtual int  player_apply_weapon_skill(int damage, bool random = true);
+	virtual int  player_apply_fighting_skill(int damage, bool aux, bool random = true);
+	virtual int  player_apply_misc_modifiers(int damage);
+	virtual int  player_apply_slaying_bonuses(int damage, bool aux, bool random = true);
     virtual int  player_apply_final_multipliers(int damage);
 
     virtual void player_exercise_combat_skills();
