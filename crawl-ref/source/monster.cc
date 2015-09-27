@@ -395,7 +395,7 @@ int monster::damage_type(int which_attack)
 random_var monster::attack_delay(const item_def *weap,
                                  const item_def *projectile,
                                  bool random, bool scaled,
-                                 bool /*shield*/) const
+                                 bool /*shield*/, bool /*average*/) const
 {
     const bool use_unarmed =
         (projectile) ? is_launched(this, weap, *projectile) != LRET_LAUNCHED

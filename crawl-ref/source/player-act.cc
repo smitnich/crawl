@@ -257,7 +257,7 @@ brand_type player::damage_brand(int)
  */
 random_var player::attack_delay(const item_def *weap,
                                 const item_def *projectile, bool random,
-                                bool scaled, bool do_shield) const
+                                bool scaled, bool do_shield, bool average) const
 {
     random_var attk_delay = constant(15);
     // a semi-arbitrary multiplier, to minimize loss of precision from integer
@@ -333,8 +333,11 @@ random_var player::attack_delay(const item_def *weap,
     if (!do_shield)
         shield_penalty = constant(0);
 
-    int final_delay = random ? attk_delay.roll() + shield_penalty.roll()
-                             : attk_delay.max() + shield_penalty.max();
+	int final_delay = random ? attk_delay.roll() + shield_penalty.roll()
+		// The average is only used for weapon_sim(); we need the unrounded
+		// value so we hold of on actually dividing by two until later
+		: average ? (attk_delay.max() + attk_delay.min()) :
+							 attk_delay.max() + shield_penalty.max();
     // Stop here if we just want the unmodified value.
     if (!scaled)
         return final_delay;

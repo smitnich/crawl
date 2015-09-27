@@ -43,6 +43,8 @@
 #include "version.h"
 #include "wiz-you.h"
 
+static double _calc_melee_delay(const item_def &weap);
+
 #ifdef WIZARD
 
 fight_data null_fight = {0.0, 0, 0, 0.0, 0, 0.0, 0.0};
@@ -778,11 +780,10 @@ void weapon_sim(const item_def &item, const int slot)
 			double hit_chance = 0.0f;
 			fight_melee(&you, mon, nullptr, true, false, &hit_chance);
 			int damage = (mon->max_hit_points - mon->hit_points);
-			random_var attack_delay = you.attack_delay(&item, false, false, false, true);
-			double average_time = attack_delay.expected()/10;
+			double average_time = _calc_melee_delay(item);
 			double expected_damage = damage*hit_chance / average_time;
-			output_str = make_stringf("%s%s: Damage: %f",
-				output_str.data(), mon->name(DESC_PLAIN).c_str(), expected_damage);
+			output_str = make_stringf("%s%s: Damage: %f   ",
+				output_str.data(), mon->name(DESC_PLAIN).c_str(), expected_damage, average_time);
 			_uninit_fsim(mon);
 		}
 		mprf_nojoin("%s", output_str.data());
@@ -790,5 +791,20 @@ void weapon_sim(const item_def &item, const int slot)
 	if (orig_wep != &item)
 		wield_weapon(true, orig_slot, false, false, false, false);
 }
+double _calc_melee_delay(const item_def &weap)
+{
+	const skill_type wpn_skill = item_attack_skill(weap);
+	double attk_delay = property(weap, PWPN_SPEED)*10;
+	attk_delay -= ((double) you.skill(wpn_skill,10)) / 2.0;
 
+	// apply minimum to weapon skill modification
+	if (weap.base_type == OBJ_WEAPONS
+	    && get_weapon_brand(weap) == SPWPN_SPEED)
+			attk_delay *= 2/3;
+    attk_delay = rv::max(attk_delay, weapon_min_delay(weap));
+	// At the moment it never gets this low anyway.
+	attk_delay = rv::max(attk_delay, constant(3));
+	return attk_delay / 100;
+
+}
 #endif
