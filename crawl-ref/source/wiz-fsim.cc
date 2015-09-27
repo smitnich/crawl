@@ -778,7 +778,11 @@ void weapon_sim(const item_def &item, const int slot)
 			double hit_chance = 0.0f;
 			fight_melee(&you, mon, nullptr, true, false, &hit_chance);
 			int damage = (mon->max_hit_points - mon->hit_points);
-			output_str = make_stringf("%s%s: Damage: %d (Hit rate=%f)", output_str.data(), mon->name(DESC_PLAIN).c_str(), damage, hit_chance);
+			random_var attack_delay = you.attack_delay(&item, false, false, false, true);
+			double average_time = attack_delay.expected()/10;
+			double expected_damage = damage*hit_chance / average_time;
+			output_str = make_stringf("%s%s: Damage: %f",
+				output_str.data(), mon->name(DESC_PLAIN).c_str(), expected_damage);
 			_uninit_fsim(mon);
 		}
 		mprf_nojoin("%s", output_str.data());
