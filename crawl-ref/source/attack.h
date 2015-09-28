@@ -110,6 +110,8 @@ public:
     string aux_source;
     kill_method_type kill_type;
 
+	double calc_player_max_damage();
+
 // Private Methods
 protected:
     virtual void init_attack(skill_type unarmed_skill, int attack_number);

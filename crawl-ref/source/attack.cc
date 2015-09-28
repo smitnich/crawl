@@ -1447,7 +1447,6 @@ int attack::calc_damage(bool random)
 
     return 0;
 }
-
 int attack::test_hit(int to_land, int ev, bool randomise_ev)
 {
     int margin = AUTOMATIC_HIT;

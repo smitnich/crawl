@@ -45,6 +45,8 @@
 
 static double _calc_melee_delay(const item_def &weap);
 
+static double _calc_avg_damage(double max_damage, double armour);
+
 #ifdef WIZARD
 
 fight_data null_fight = {0.0, 0, 0, 0.0, 0, 0.0, 0.0};
@@ -460,7 +462,7 @@ static fight_data _get_fight_data(monster &mon, int iter_limit, bool defend, boo
 
             int damage = you.hp_max - you.hp;
             if (did_hit)
-                hits++;
+                hits++; 
             cumulative_damage += damage;
             if (damage > fdata.max_dam)
                 fdata.max_dam = damage;
@@ -763,8 +765,12 @@ void weapon_sim(const item_def &item, const int slot)
 	{ MONS_EV_TEST, MONS_EV_TEST_RES }, { MONS_AC_TEST, MONS_AC_TEST_RES }, { MONS_DEFENSE_TEST, MONS_DEFENSE_TEST_RES } };
 	const int orig_slot = you.equip[EQ_WEAPON];
 	const item_def *orig_wep = you.weapon();
+	int max_damage[2] = { -1, -1 };
+	unwind_var<FixedBitVector<NUM_DISABLEMENTS> > disabilities(crawl_state.disables);
+	crawl_state.disables.set(DIS_DEATH);
+	crawl_state.disables.set(DIS_DELAY);
 	string output_str = "";
-	mprf("%s:", item.name(DESC_YOUR).c_str());
+	output_str = make_stringf("%s: ",item.name(DESC_YOUR).c_str());
 	const brand_type brand = get_weapon_brand(item);
 	int mon_count = (brand == SPWPN_FLAMING || brand == SPWPN_FREEZING ||
 		brand == SPWPN_HOLY_WRATH || brand == SPWPN_ELECTROCUTION) ? 2 : 1;
@@ -772,24 +778,65 @@ void weapon_sim(const item_def &item, const int slot)
 	{
 		wield_weapon(true, slot, false, true, false, false, false);
 	}
+	double damage = 0;
 	for (vector<monster_type> mt : test_mons) {
 		output_str = make_stringf("");
 		for (int i = 0; i < mon_count; i++)
 		{
 			monster *mon = _init_fsim(mt[i]);
 			double hit_chance = 0.0f;
-			fight_melee(&you, mon, nullptr, true, false, &hit_chance);
-			int damage = (mon->max_hit_points - mon->hit_points);
+			int ac = mon->armour_class();
+			if (ac == 0) 
+			{
+				fight_melee(&you, mon, nullptr, true, false, &hit_chance);
+				damage = (mon->max_hit_points - mon->hit_points) + 0.5;
+				if (max_damage[i] == -1)
+					max_damage[i] = damage * 2;
+			}
+			else
+			{
+				fight_melee(&you, mon, nullptr, true, false, &hit_chance);
+				damage = _calc_avg_damage(max_damage[i], ac);
+			}
 			double average_time = _calc_melee_delay(item);
 			double expected_damage = damage*hit_chance / average_time;
 			output_str = make_stringf("%s%s: Damage: %f   ",
-				output_str.data(), mon->name(DESC_PLAIN).c_str(), expected_damage, average_time);
+				output_str.data(), mon->name(DESC_PLAIN).c_str(), expected_damage);
 			_uninit_fsim(mon);
 		}
 		mprf_nojoin("%s", output_str.data());
 	}
 	if (orig_wep != &item)
 		wield_weapon(true, orig_slot, false, false, false, false);
+}
+double _calc_avg_damage(double max_damage, double armour)
+{
+	double damage = 0.0;
+	double damage_chance = 0.0;
+    // If damage is > armour, then we will do an average of (damage - armour) damage
+	// (damage-armour)/(damage) of the time. We do 0 damage otherwise
+	// With two identical ranges of random numbers, we average out to a sum of
+	// 1/6 the range for the amount of damage over armour;
+	if (max_damage > armour)
+	{
+		damage = (max_damage - armour) / 2.0;
+		damage_chance = (max_damage - armour) / (max_damage);
+		return damage * damage_chance + (1.0 - damage_chance)*(armour / 6.0);
+	}
+	else if (max_damage < armour)
+	{
+    // With damage < armour, we only inflict damage when armour rolls in the range of 1 to damage
+	// In this case, we again inflict an average of 1/6 the range
+	// Damage chance is (armour-damage)/armour
+		damage = max_damage / 6.0;
+		damage_chance = (max_damage) / (armour);
+	}
+	else
+	{
+		damage = max_damage / 6.0;
+		damage_chance = 1.0;
+	}
+	return damage*damage_chance;
 }
 double _calc_melee_delay(const item_def &weap)
 {
@@ -801,9 +848,9 @@ double _calc_melee_delay(const item_def &weap)
 	if (weap.base_type == OBJ_WEAPONS
 	    && get_weapon_brand(weap) == SPWPN_SPEED)
 			attk_delay *= 2/3;
-    attk_delay = rv::max(attk_delay, weapon_min_delay(weap));
+    attk_delay = rv::max(attk_delay, weapon_min_delay(weap)*10);
 	// At the moment it never gets this low anyway.
-	attk_delay = rv::max(attk_delay, constant(3));
+	attk_delay = rv::max(attk_delay, constant(3)*10);
 	return attk_delay / 100;
 
 }
