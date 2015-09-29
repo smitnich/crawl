@@ -776,9 +776,9 @@ string weapon_sim(const item_def &item, const int slot)
 	int mon_count = (brand == SPWPN_FLAMING || brand == SPWPN_FREEZING ||
 		brand == SPWPN_HOLY_WRATH || brand == SPWPN_ELECTROCUTION) ? 2 : 1;
 	if (mon_count == 2)
-		header = "\nDamage Estimates   Eff      Res\n";
+		header = "\n\nDamage Estimates   Eff      Res\n";
 	else
-		header = "\nDamage Estimates   Eff\n";
+		header = "\n\nDamage Estimates   Eff\n";
 	
 	output_str = header;
 	// Seed the RNG with the same value everytime so that the results will not change upon
@@ -786,10 +786,7 @@ string weapon_sim(const item_def &item, const int slot)
 	seed_rng(27);
 
 	if (orig_wep != &item)
-	{
-		if (!wield_weapon(true, slot, false, true, false, false, false))
-			return "";
-	}
+		you.equip[EQ_WEAPON] = slot;
 
 	for (vector<monster_type> mt : test_mons) {
 		for (int i = 0; i < mon_count; i++)
@@ -810,7 +807,8 @@ string weapon_sim(const item_def &item, const int slot)
 	}
 
 	if (orig_wep != &item)
-		wield_weapon(true, orig_slot, false, false, false, false);
+		you.equip[EQ_WEAPON] = orig_slot;
+	//	wield_weapon(true, orig_slot, false, true, false, false, false);
 
 	seed_rng();
 	return output_str;
