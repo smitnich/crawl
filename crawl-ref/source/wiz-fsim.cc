@@ -16,6 +16,7 @@
 #include "directn.h"
 #include "env.h"
 #include "fight.h"
+#include "invent.h"
 #include "itemprop.h"
 #include "items.h"
 #include "item_use.h"
@@ -756,34 +757,63 @@ void wizard_fight_sim(bool double_scale)
     mpr("Done.");
 }
 
-void weapon_sim(const item_def &item, const int slot)
+string weapon_sim(const item_def &item, const int slot)
 {
+	string header = "";
+
+	if (!in_inventory(item) || !fully_identified(item))
+		return "";
+
+	const unsigned int indent_length[2] = { 22, 9 };
+
 	const vector<vector<monster_type>> test_mons = { { MONS_NO_DEFENSE_TEST, MONS_NO_DEFENSE_TEST_RES },
 	{ MONS_EV_TEST, MONS_EV_TEST_RES }, { MONS_AC_TEST, MONS_AC_TEST_RES }, { MONS_DEFENSE_TEST, MONS_DEFENSE_TEST_RES } };
+
 	const int orig_slot = you.equip[EQ_WEAPON];
 	const item_def *orig_wep = you.weapon();
 	string output_str = "";
-	mprf("%s:", item.name(DESC_YOUR).c_str());
 	const brand_type brand = get_weapon_brand(item);
 	int mon_count = (brand == SPWPN_FLAMING || brand == SPWPN_FREEZING ||
 		brand == SPWPN_HOLY_WRATH || brand == SPWPN_ELECTROCUTION) ? 2 : 1;
+	if (mon_count == 2)
+		header = "\nDamage Estimates   Eff      Res\n";
+	else
+		header = "\nDamage Estimates   Eff\n";
+	
+	output_str = header;
+	// Seed the RNG with the same value everytime so that the results will not change upon
+	// reopening the mnu
+	seed_rng(27);
+
 	if (orig_wep != &item)
 	{
-		wield_weapon(true, slot, false, true, false, false, false);
+		if (!wield_weapon(true, slot, false, true, false, false, false))
+			return "";
 	}
+
 	for (vector<monster_type> mt : test_mons) {
-		output_str = make_stringf("");
 		for (int i = 0; i < mon_count; i++)
 		{
+			string tmp_str, dmg_str;
 			monster *mon = _init_fsim(mt[i]);
-			fight_data fdata = _get_fight_data(*mon, 1000, false);
-			output_str = make_stringf("%s%s: Damage: %.2f    ", output_str.data(), mon->name(DESC_PLAIN).c_str(), fdata.av_eff_dam);
+			fight_data fdata = _get_fight_data(*mon, 250, false);
+			if (i == 0)
+		        tmp_str = mon->name(DESC_PLAIN);
+			dmg_str = make_stringf("%.1f", fdata.av_eff_dam);
+			while (tmp_str.length() + dmg_str.length() < indent_length[i])
+				tmp_str.append(" ");
+			output_str.append(tmp_str);
+			output_str.append(dmg_str);
 			_uninit_fsim(mon);
 		}
-		mprf_nojoin("%s", output_str.data());
+		output_str.append("\n");
 	}
+
 	if (orig_wep != &item)
 		wield_weapon(true, orig_slot, false, false, false, false);
+
+	seed_rng();
+	return output_str;
 }
 
 #endif
