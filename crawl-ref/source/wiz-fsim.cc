@@ -24,6 +24,7 @@
 #include "libutil.h"
 #include "makeitem.h"
 #include "message.h"
+#include "melee_attack.h"
 #include "mgen_data.h"
 #include "mon-clone.h"
 #include "mon-death.h"
@@ -757,8 +758,35 @@ void wizard_fight_sim(bool double_scale)
     mpr("Done.");
 }
 
+double test_weapon_against_monster(const item_def *wep, monster_type mon, int iterations, bool do_resistable)
+{
+	seed_rng(27);
+	monsterentry *data = get_monster_data(mon);
+	int ac = data->AC;
+	int ev = data->ev;
+	int damage = 0;
+	double time_taken = 0;
+	for (int i = 0; i < iterations; i++)
+	{
+		melee_attack attk(&you, nullptr);
+		int to_hit = attk.calc_to_hit();
+		int tmp_damage = attk.calc_raw_damage();
+		int spec_damage = attk.calc_brand_damage(do_resistable);
+		tmp_damage = max(0,tmp_damage - random2(1 + ac));
+		tmp_damage += spec_damage;
+		time_taken += you.attack_delay(wep);
+		if (to_hit >= ev)
+     		damage += tmp_damage;
+	}
+	time_taken /= (10 * iterations);
+	double average_damage = (damage/iterations)/time_taken;
+	seed_rng();
+	return average_damage;
+}
+
 string weapon_sim(const item_def &item, const int slot)
 {
+	const int iterations = 250;
 	string header = "";
 
 	if (!in_inventory(item) || !fully_identified(item))
@@ -781,9 +809,6 @@ string weapon_sim(const item_def &item, const int slot)
 		header = "\n\nDamage Estimates   Eff\n";
 	
 	output_str = header;
-	// Seed the RNG with the same value everytime so that the results will not change upon
-	// reopening the mnu
-	seed_rng(27);
 
 	if (orig_wep != &item)
 		you.equip[EQ_WEAPON] = slot;
@@ -791,17 +816,17 @@ string weapon_sim(const item_def &item, const int slot)
 	for (vector<monster_type> mt : test_mons) {
 		for (int i = 0; i < mon_count; i++)
 		{
+			monsterentry *mon = get_monster_data(mt[i]);
 			string tmp_str, dmg_str;
-			monster *mon = _init_fsim(mt[i]);
-			fight_data fdata = _get_fight_data(*mon, 250, false);
+			int count = 0;
+			double damage = test_weapon_against_monster(&item, mt[i], iterations, i == 0);
 			if (i == 0)
-		        tmp_str = mon->name(DESC_PLAIN);
-			dmg_str = make_stringf("%.1f", fdata.av_eff_dam);
+		        tmp_str = mon->name;
+			dmg_str = make_stringf("%.1f", damage);
 			while (tmp_str.length() + dmg_str.length() < indent_length[i])
 				tmp_str.append(" ");
 			output_str.append(tmp_str);
 			output_str.append(dmg_str);
-			_uninit_fsim(mon);
 		}
 		output_str.append("\n");
 	}
@@ -813,5 +838,4 @@ string weapon_sim(const item_def &item, const int slot)
 	seed_rng();
 	return output_str;
 }
-
 #endif
