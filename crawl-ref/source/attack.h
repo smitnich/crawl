@@ -97,10 +97,11 @@ public:
     attack(actor *attk, actor *defn, actor *blame = 0);
 
     // To-hit is a function of attacker/defender, defined in sub-classes
-    virtual int calc_to_hit(bool random);
+    virtual int calc_to_hit(bool random) = 0;
 
-	int calc_raw_damage();
+	virtual int calc_raw_damage() = 0;
 	int calc_brand_damage(bool do_resistable);
+	int test_hit(int to_hit, int ev, bool randomise_ev);
 
     // Exact copies of their melee_attack predecessors
     string actor_name(const actor *a, description_level_type desc,
@@ -136,7 +137,6 @@ protected:
     virtual int calc_mon_to_hit_base() = 0;
     virtual int apply_damage_modifiers(int damage, int damage_max) = 0;
     virtual int calc_damage();
-    int test_hit(int to_hit, int ev, bool randomise_ev);
     int apply_defender_ac(int damage, int damage_max = 0) const;
     bool attack_warded_off();
     // Determine if we're blocking (partially or entirely)

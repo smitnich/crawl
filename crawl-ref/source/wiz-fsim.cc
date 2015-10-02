@@ -765,28 +765,54 @@ double test_weapon_against_monster(const item_def *wep, monster_type mon, int it
 	int ac = data->AC;
 	int ev = data->ev;
 	int damage = 0;
+	int hits = 0;
 	double time_taken = 0;
-	for (int i = 0; i < iterations; i++)
+	if (is_range_weapon(*wep)) 
 	{
-		melee_attack attk(&you, nullptr);
-		int to_hit = attk.calc_to_hit();
-		int tmp_damage = attk.calc_raw_damage();
-		int spec_damage = attk.calc_brand_damage(do_resistable);
-		tmp_damage = max(0,tmp_damage - random2(1 + ac));
-		tmp_damage += spec_damage;
-		time_taken += you.attack_delay(wep);
-		if (to_hit >= ev)
-     		damage += tmp_damage;
+		for (int i = 0; i < iterations; i++)
+		{
+			ranged_attack attk(&you, &you, &you.inv[you.m_quiver.get_fire_item()], false);
+			int to_hit = attk.calc_to_hit(true);
+			int tmp_damage = attk.calc_raw_damage();
+			int spec_damage = attk.calc_brand_damage(do_resistable);
+			tmp_damage = max(0, tmp_damage - random2(1 + ac));
+			tmp_damage += spec_damage;
+			time_taken += you.attack_delay(wep,&you.inv[you.m_quiver.get_fire_item()]);
+			if (attk.test_hit(to_hit, ev, false) >= 0)
+			{
+				hits++;
+				damage += tmp_damage;
+			}
+		}
+	}
+	else
+	{
+		for (int i = 0; i < iterations; i++)
+		{
+			melee_attack attk(&you, nullptr);
+			int to_hit = attk.calc_to_hit();
+			int tmp_damage = attk.calc_raw_damage();
+			int spec_damage = attk.calc_brand_damage(do_resistable);
+			tmp_damage = max(0, tmp_damage - random2(1 + ac));
+			tmp_damage += spec_damage;
+			time_taken += you.attack_delay(wep);
+			if (attk.test_hit(to_hit, ev, false) >= 0)
+			{
+				hits++;
+				damage += tmp_damage;
+			}
+		}
 	}
 	time_taken /= (10 * iterations);
-	double average_damage = (damage/iterations)/time_taken;
+	double average_damage = ((double) damage/iterations)/time_taken;
+	mprf("Damage = %f, hits = %d, time_taken = %f", average_damage, hits, time_taken);
 	seed_rng();
 	return average_damage;
 }
 
 string weapon_sim(const item_def &item, const int slot)
 {
-	const int iterations = 250;
+	const int iterations = 1000;
 	string header = "";
 
 	if (!in_inventory(item) || !fully_identified(item))
@@ -835,7 +861,7 @@ string weapon_sim(const item_def &item, const int slot)
 		you.equip[EQ_WEAPON] = orig_slot;
 	//	wield_weapon(true, orig_slot, false, true, false, false, false);
 
-	seed_rng();
+	//seed_rng();
 	return output_str;
 }
 #endif

@@ -1366,29 +1366,6 @@ int attack::calc_stat_to_dam_base()
     return you.strength() + (you.dex() - you.strength()) * weight / 20;
 }
 
-int attack::calc_raw_damage()
-{
-	int potential_damage, damage;
-
-	potential_damage = using_weapon() || wpn_skill == SK_THROWING
-		? weapon_damage() : calc_base_unarmed_damage();
-
-	potential_damage = player_stat_modify_damage(potential_damage);
-
-	damage = random2(potential_damage + 1);
-
-	damage = player_apply_weapon_skill(damage);
-	damage = player_apply_fighting_skill(damage, false);
-	damage = player_apply_misc_modifiers(damage);
-	damage = player_apply_slaying_bonuses(damage, false);
-	damage = player_apply_final_multipliers(damage);
-
-	damage = max(0, damage);
-
-	damage_done = damage;
-
-	return damage;
-}
 int attack::calc_brand_damage(bool do_resistable)
 {
 	int result = 0;

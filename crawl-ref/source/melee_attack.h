@@ -48,6 +48,8 @@ public:
 
     static void chaos_affect_actor(actor *victim);
 
+	int calc_raw_damage() override;
+
 private:
     /* Attack phases */
     bool handle_phase_attempted() override;
