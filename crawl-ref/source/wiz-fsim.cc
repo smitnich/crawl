@@ -758,26 +758,36 @@ void wizard_fight_sim(bool double_scale)
     mpr("Done.");
 }
 
-double test_weapon_against_monster(const item_def *wep, monster_type mon, int iterations, bool do_resistable)
+double test_weapon_against_monster(const item_def *wep, monster_type mon, int iterations,
+	                               bool do_resistable, int projectile_slot)
 {
+	const monsterentry *data = get_monster_data(mon);
+	const item_def *projectile = nullptr;
 	seed_rng(27);
-	monsterentry *data = get_monster_data(mon);
+	if (is_range_weapon(*wep) && projectile_slot != -1)
+		projectile = &you.inv[projectile_slot];
 	int ac = data->AC;
 	int ev = data->ev;
 	int damage = 0;
 	int hits = 0;
 	double time_taken = 0;
-	if (is_range_weapon(*wep)) 
+	if (is_range_weapon(*wep) || is_throwable(&you,*wep))
 	{
+		// Treat the projectile as the weapon if it is a throwable item
+		if (is_throwable(&you, *wep))
+		{
+			projectile = wep;
+			wep = nullptr;
+		}
 		for (int i = 0; i < iterations; i++)
 		{
-			ranged_attack attk(&you, &you, &you.inv[you.m_quiver.get_fire_item()], false);
+			ranged_attack attk(&you, &you, (item_def*) projectile, false);
 			int to_hit = attk.calc_to_hit(true);
 			int tmp_damage = attk.calc_raw_damage();
 			int spec_damage = attk.calc_brand_damage(do_resistable);
 			tmp_damage = max(0, tmp_damage - random2(1 + ac));
 			tmp_damage += spec_damage;
-			time_taken += you.attack_delay(wep,&you.inv[you.m_quiver.get_fire_item()]);
+			time_taken += you.attack_delay(wep, projectile);
 			if (attk.test_hit(to_hit, ev, false) >= 0)
 			{
 				hits++;
@@ -805,18 +815,30 @@ double test_weapon_against_monster(const item_def *wep, monster_type mon, int it
 	}
 	time_taken /= (10 * iterations);
 	double average_damage = ((double) damage/iterations)/time_taken;
-	mprf("Damage = %f, hits = %d, time_taken = %f", average_damage, hits, time_taken);
 	seed_rng();
 	return average_damage;
 }
 
 string weapon_sim(const item_def &item, const int slot)
 {
-	const int iterations = 1000;
+	const int iterations = 250;
+	int projectile_slot = -1;
 	string header = "";
 
 	if (!in_inventory(item) || !fully_identified(item))
 		return "";
+
+	if (is_range_weapon(item))
+	{
+		projectile_slot = you.m_quiver.get_fire_item();
+		// No missile to be fired, nothing to be done here other than
+		// let the user know
+		if (projectile_slot == -1)
+			return "\n\nDamage estimates for ranged weapons require valid ammo.\n\n";
+	}
+
+	if (item.base_type == OBJ_MISSILES && !is_throwable(&you, item))
+		return "\n\nTo view damage estimates for ammo, quiver it and select the corresponding weapon.";
 
 	const unsigned int indent_length[2] = { 22, 9 };
 
@@ -845,7 +867,8 @@ string weapon_sim(const item_def &item, const int slot)
 			monsterentry *mon = get_monster_data(mt[i]);
 			string tmp_str, dmg_str;
 			int count = 0;
-			double damage = test_weapon_against_monster(&item, mt[i], iterations, i == 0);
+			double damage = test_weapon_against_monster(&item, mt[i], 
+				            iterations, i == 0, projectile_slot);
 			if (i == 0)
 		        tmp_str = mon->name;
 			dmg_str = make_stringf("%.1f", damage);

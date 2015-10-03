@@ -2058,7 +2058,8 @@ string get_item_description(const item_def &item, bool verbose,
             description << "\nMenu/colouring prefixes: " << menu_prefix;
     }
 
-	if (item.base_type == OBJ_WEAPONS || item.base_type == OBJ_STAVES)
+	if (item.base_type == OBJ_WEAPONS ||
+		item.base_type == OBJ_STAVES  || item.base_type == OBJ_MISSILES)
 		description << weapon_sim(item, item.link);
 
     return description.str();
@@ -2499,7 +2500,7 @@ static bool _actions_prompt(item_def &item, bool allow_inscribe, bool do_prompt)
         _adjust_item(item);
         return false;
 	case CMD_SIMULATE_WEAPON:
-		weapon_sim(item,slot);
+		mprf(weapon_sim(item,slot).data());
 		return true;
     case CMD_NO_CMD:
     default:
