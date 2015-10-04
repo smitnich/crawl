@@ -840,29 +840,22 @@ string weapon_sim(const item_def &item, const int slot)
 	if (!in_inventory(item) || !fully_identified(item))
 		return "";
 
-	if (is_range_weapon(item))
-	{
-		projectile_slot = you.m_quiver.get_fire_item();
-		// No missile to be fired, nothing to be done here other than
-		// let the user know
-		if (projectile_slot == -1)
-			return "\n\nDamage estimates for ranged weapons require valid ammo.\n\n";
-	}
-
 	if (item.base_type == OBJ_MISSILES && !is_throwable(&you, item))
 		return "\n\nTo view damage estimates for ammo, quiver it and select the corresponding weapon.";
 
 	const unsigned int indent_length[2] = { 22, 16 };
 
-	const vector<vector<monster_type>> test_mons = { { MONS_NO_DEFENSE_TEST, MONS_NO_DEFENSE_TEST_RES },
-	{ MONS_EV_TEST, MONS_EV_TEST_RES }, { MONS_AC_TEST, MONS_AC_TEST_RES }, { MONS_DEFENSE_TEST, MONS_DEFENSE_TEST_RES } };
+	const vector<monster_type> test_mons = { MONS_NO_DEFENSE_TEST, 
+	MONS_EV_TEST,  MONS_AC_TEST, MONS_DEFENSE_TEST };
 
 	const int orig_slot = you.equip[EQ_WEAPON];
+
 	const item_def *orig_wep = you.weapon();
 	string output_str = "";
 	const brand_type brand = get_weapon_brand(item);
 	bool do_resistable = (brand == SPWPN_FLAMING || brand == SPWPN_FREEZING ||
-		brand == SPWPN_HOLY_WRATH || brand == SPWPN_ELECTROCUTION);
+		brand == SPWPN_HOLY_WRATH || brand == SPWPN_ELECTROCUTION || brand == SPWPN_CHAOS
+		|| brand == SPWPN_FROST || brand == SPWPN_FLAME);
 	if (do_resistable)
 		header = "\n\nDamage Estimates   Base      Resistable\n";
 	else
@@ -873,12 +866,37 @@ string weapon_sim(const item_def &item, const int slot)
 	if (orig_wep != &item)
 		you.equip[EQ_WEAPON] = slot;
 
-	for (vector<monster_type> mt : test_mons) {
-		monsterentry *mon = get_monster_data(mt[0]);
+	if (is_range_weapon(item))
+	{
+		item_def *item_out = nullptr;
+		int slot_out = 0;
+		vector<int> order;
+		you.m_quiver.get_fire_order(order, false);
+		if (order.size() == 0)
+			return "";
+		launch_retval launched = LRET_LAUNCHED;
+		for (int order_slot : order)
+		{
+			item_out = &you.inv[order_slot];
+			if (is_launched(&you, &item, *item_out) == LRET_LAUNCHED)
+			{
+				projectile_slot = order_slot;
+				break;
+			}
+		}
+
+		// No missile to be fired, nothing to be done here other than
+		// let the user know
+		if (projectile_slot == -1 || is_launched(&you, &item, *item_out) != LRET_LAUNCHED)
+			return "\n\nDamage estimates for ranged weapons require valid ammo.\n\n";
+	}
+
+	for (monster_type mt : test_mons) {
+		monsterentry *mon = get_monster_data(mt);
 		string tmp_str, dmg_str;
 		int count = 0;
-		double damage = test_weapon_against_monster(&item, mt[0],
-			iterations, projectile_slot, time_taken, brand_damage);
+		double damage = test_weapon_against_monster(&item, mt,
+		    iterations, projectile_slot, time_taken, brand_damage);
 		tmp_str = mon->name;
 		dmg_str = make_stringf("%.1f", damage);
 		while (tmp_str.length() + dmg_str.length() < indent_length[0])
