@@ -792,7 +792,7 @@ double test_weapon_against_monster(const item_def *wep, monster_type mon, int it
 			if (attk.test_hit(to_hit, ev, false) >= 0)
 			{
 				hits++;
-				if (spec_damage > 0 && wep->brand != SPWPN_VORPAL && wep->brand != SPMSL_STEEL)
+				if (spec_damage > 0 && wep->brand != SPWPN_VORPAL || projectile->brand != SPMSL_STEEL)
 					brand_damage += spec_damage;
 				else
 					tmp_damage += spec_damage;
@@ -853,15 +853,6 @@ string weapon_sim(const item_def &item, const int slot)
 	const item_def *orig_wep = you.weapon();
 	string output_str = "";
 	const brand_type brand = get_weapon_brand(item);
-	bool do_resistable = (brand == SPWPN_FLAMING || brand == SPWPN_FREEZING ||
-		brand == SPWPN_HOLY_WRATH || brand == SPWPN_ELECTROCUTION || brand == SPWPN_CHAOS
-		|| brand == SPWPN_FROST || brand == SPWPN_FLAME);
-	if (do_resistable)
-		header = "\n\nDamage Estimates   Base      Resistable\n";
-	else
-		header = "\n\nDamage Estimates   Eff\n";
-	
-	output_str = header;
 
 	if (orig_wep != &item)
 		you.equip[EQ_WEAPON] = slot;
@@ -875,22 +866,41 @@ string weapon_sim(const item_def &item, const int slot)
 		if (order.size() == 0)
 			return "";
 		launch_retval launched = LRET_LAUNCHED;
-		for (int order_slot : order)
+		projectile_slot = you.m_quiver.get_fire_item();
+		item_out = &you.inv[projectile_slot];
+		if (is_launched(&you, &item, *item_out) != LRET_LAUNCHED)
 		{
-			item_out = &you.inv[order_slot];
-			if (is_launched(&you, &item, *item_out) == LRET_LAUNCHED)
+			for (int order_slot : order)
 			{
-				projectile_slot = order_slot;
-				break;
+				item_out = &you.inv[order_slot];
+				if (is_launched(&you, &item, *item_out) == LRET_LAUNCHED)
+				{
+					projectile_slot = order_slot;
+					break;
+				}
 			}
 		}
-
 		// No missile to be fired, nothing to be done here other than
 		// let the user know
 		if (projectile_slot == -1 || is_launched(&you, &item, *item_out) != LRET_LAUNCHED)
 			return "\n\nDamage estimates for ranged weapons require valid ammo.\n\n";
 	}
 
+	special_missile_type ammo = SPMSL_NORMAL;
+	if (projectile_slot != -1)
+		ammo = get_ammo_brand(you.inv[projectile_slot]);
+
+	bool do_resistable = (brand == SPWPN_FLAMING || brand == SPWPN_FREEZING ||
+		brand == SPWPN_HOLY_WRATH || brand == SPWPN_ELECTROCUTION || brand == SPWPN_CHAOS
+		|| brand == SPWPN_FROST || brand == SPWPN_FLAME || ammo == SPMSL_FLAME || ammo == SPMSL_FROST ||
+		ammo == SPMSL_CHAOS);
+	if (do_resistable)
+		header = "\n\nDamage Estimates   Base      Resistable\n";
+	else
+		header = "\n\nDamage Estimates   Eff\n";
+	
+	output_str = header;
+	
 	for (monster_type mt : test_mons) {
 		monsterentry *mon = get_monster_data(mt);
 		string tmp_str, dmg_str;
