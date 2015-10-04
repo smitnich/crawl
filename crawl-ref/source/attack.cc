@@ -863,7 +863,7 @@ brand_type attack::random_chaos_brand()
                      2, SPWPN_DISTORTION,
                      0));
 
-        if (one_chance_in(3))
+        if (one_chance_in(3) || !defender)
             break;
 
         bool susceptible = true;
@@ -1366,31 +1366,38 @@ int attack::calc_stat_to_dam_base()
     return you.strength() + (you.dex() - you.strength()) * weight / 20;
 }
 
-int attack::calc_brand_damage(bool do_resistable)
+int attack::calc_brand_damage()
 {
 	int result = 0;
 	brand_type brand = damage_brand == SPWPN_CHAOS ? random_chaos_brand() : damage_brand;
-	if (do_resistable) {
-		if (brand == SPWPN_FLAMING || brand == SPWPN_FREEZING)
+	switch (brand)
+	{
+		case SPWPN_FLAMING:
+		case SPWPN_FREEZING:
 			result = random2(damage_done) / 2 + 1;
-		else if (brand == SPWPN_ELECTROCUTION)
+			break;
+		case SPWPN_ELECTROCUTION:
 			result = one_chance_in(3) ? 8 + random2(13) : 0;
-		else if (brand == SPWPN_HOLY_WRATH)
+			break;
+		case SPWPN_HOLY_WRATH:
 			result = 1 + (random2(damage_done * 15) / 10);
-		else if (brand == SPWPN_PAIN)
+			break;
+		case SPWPN_PAIN:
 			result = one_chance_in(attacker->skill_rdiv(SK_NECROMANCY) + 1)
 			? random2(1 + attacker->skill_rdiv(SK_NECROMANCY)) : 0;
-	}
-	else if (brand == SPWPN_VORPAL)
-		result = 1 + random2(damage_done) / 3;
-	else if (brand == SPWPN_DISTORTION)
-	{
-		if (one_chance_in(3))
-			result = 1 + random2avg(7, 2);
-		else if (one_chance_in(3))
-			result = 3 + random2avg(24, 2);
+			break;
+		case SPWPN_VORPAL:
+			result = 1 + random2(damage_done) / 3;
+			break;
+		case SPWPN_DISTORTION:
+			if (one_chance_in(3))
+				result = 1 + random2avg(7, 2);
+			else if (one_chance_in(3))
+				result = 3 + random2avg(24, 2);
 		// Ignore banishment, teleportation etc, they do not inflict any
 		// damage
+		default:
+			break;
 	}
 	return result;
 

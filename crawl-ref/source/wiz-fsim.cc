@@ -759,7 +759,7 @@ void wizard_fight_sim(bool double_scale)
 }
 
 double test_weapon_against_monster(const item_def *wep, monster_type mon, int iterations,
-	                               bool do_resistable, int projectile_slot)
+	                               int projectile_slot, double &time_taken, double &brand_damage)
 {
 	const monsterentry *data = get_monster_data(mon);
 	const item_def *projectile = nullptr;
@@ -770,7 +770,8 @@ double test_weapon_against_monster(const item_def *wep, monster_type mon, int it
 	int ev = data->ev;
 	int damage = 0;
 	int hits = 0;
-	double time_taken = 0;
+	brand_damage = 0;
+	time_taken = 0;
 	if (is_range_weapon(*wep) || is_throwable(&you,*wep))
 	{
 		// Treat the projectile as the weapon if it is a throwable item
@@ -784,13 +785,17 @@ double test_weapon_against_monster(const item_def *wep, monster_type mon, int it
 			ranged_attack attk(&you, &you, (item_def*) projectile, false);
 			int to_hit = attk.calc_to_hit(true);
 			int tmp_damage = attk.calc_raw_damage();
-			int spec_damage = attk.calc_brand_damage(do_resistable);
 			tmp_damage = max(0, tmp_damage - random2(1 + ac));
-			tmp_damage += spec_damage;
+			attk.damage_done = tmp_damage;
+			int spec_damage = attk.calc_brand_damage();
 			time_taken += you.attack_delay(wep, projectile);
 			if (attk.test_hit(to_hit, ev, false) >= 0)
 			{
 				hits++;
+				if (spec_damage > 0 && wep->brand != SPWPN_VORPAL && wep->brand != SPMSL_STEEL)
+					brand_damage += spec_damage;
+				else
+					tmp_damage += spec_damage;
 				damage += tmp_damage;
 			}
 		}
@@ -802,19 +807,24 @@ double test_weapon_against_monster(const item_def *wep, monster_type mon, int it
 			melee_attack attk(&you, nullptr);
 			int to_hit = attk.calc_to_hit();
 			int tmp_damage = attk.calc_raw_damage();
-			int spec_damage = attk.calc_brand_damage(do_resistable);
 			tmp_damage = max(0, tmp_damage - random2(1 + ac));
-			tmp_damage += spec_damage;
+			attk.damage_done = tmp_damage;
+			int spec_damage = attk.calc_brand_damage();
 			time_taken += you.attack_delay(wep);
 			if (attk.test_hit(to_hit, ev, false) >= 0)
 			{
 				hits++;
 				damage += tmp_damage;
+				if (spec_damage > 0 && wep->brand != SPWPN_VORPAL)
+					brand_damage += spec_damage;
+				else
+					tmp_damage += spec_damage;
 			}
 		}
 	}
 	time_taken /= (10 * iterations);
 	double average_damage = ((double) damage/iterations)/time_taken;
+	brand_damage = ((double)brand_damage / iterations) / time_taken;
 	seed_rng();
 	return average_damage;
 }
@@ -824,6 +834,8 @@ string weapon_sim(const item_def &item, const int slot)
 	const int iterations = 250;
 	int projectile_slot = -1;
 	string header = "";
+	double time_taken = 0.0f;
+	double brand_damage = 0.0f;
 
 	if (!in_inventory(item) || !fully_identified(item))
 		return "";
@@ -840,7 +852,7 @@ string weapon_sim(const item_def &item, const int slot)
 	if (item.base_type == OBJ_MISSILES && !is_throwable(&you, item))
 		return "\n\nTo view damage estimates for ammo, quiver it and select the corresponding weapon.";
 
-	const unsigned int indent_length[2] = { 22, 9 };
+	const unsigned int indent_length[2] = { 22, 16 };
 
 	const vector<vector<monster_type>> test_mons = { { MONS_NO_DEFENSE_TEST, MONS_NO_DEFENSE_TEST_RES },
 	{ MONS_EV_TEST, MONS_EV_TEST_RES }, { MONS_AC_TEST, MONS_AC_TEST_RES }, { MONS_DEFENSE_TEST, MONS_DEFENSE_TEST_RES } };
@@ -849,10 +861,10 @@ string weapon_sim(const item_def &item, const int slot)
 	const item_def *orig_wep = you.weapon();
 	string output_str = "";
 	const brand_type brand = get_weapon_brand(item);
-	int mon_count = (brand == SPWPN_FLAMING || brand == SPWPN_FREEZING ||
-		brand == SPWPN_HOLY_WRATH || brand == SPWPN_ELECTROCUTION) ? 2 : 1;
-	if (mon_count == 2)
-		header = "\n\nDamage Estimates   Eff      Res\n";
+	bool do_resistable = (brand == SPWPN_FLAMING || brand == SPWPN_FREEZING ||
+		brand == SPWPN_HOLY_WRATH || brand == SPWPN_ELECTROCUTION);
+	if (do_resistable)
+		header = "\n\nDamage Estimates   Base      Resistable\n";
 	else
 		header = "\n\nDamage Estimates   Eff\n";
 	
@@ -862,20 +874,24 @@ string weapon_sim(const item_def &item, const int slot)
 		you.equip[EQ_WEAPON] = slot;
 
 	for (vector<monster_type> mt : test_mons) {
-		for (int i = 0; i < mon_count; i++)
+		monsterentry *mon = get_monster_data(mt[0]);
+		string tmp_str, dmg_str;
+		int count = 0;
+		double damage = test_weapon_against_monster(&item, mt[0],
+			iterations, projectile_slot, time_taken, brand_damage);
+		tmp_str = mon->name;
+		dmg_str = make_stringf("%.1f", damage);
+		while (tmp_str.length() + dmg_str.length() < indent_length[0])
+			tmp_str.append(" ");
+		output_str.append(tmp_str);
+		output_str.append(dmg_str);
+		if (do_resistable)
 		{
-			monsterentry *mon = get_monster_data(mt[i]);
-			string tmp_str, dmg_str;
-			int count = 0;
-			double damage = test_weapon_against_monster(&item, mt[i], 
-				            iterations, i == 0, projectile_slot);
-			if (i == 0)
-		        tmp_str = mon->name;
-			dmg_str = make_stringf("%.1f", damage);
-			while (tmp_str.length() + dmg_str.length() < indent_length[i])
+			tmp_str = "";
+			dmg_str = make_stringf("%.1f", brand_damage);
+			while (tmp_str.length() + dmg_str.length() < indent_length[1])
 				tmp_str.append(" ");
-			output_str.append(tmp_str);
-			output_str.append(dmg_str);
+			output_str.append(tmp_str + dmg_str);
 		}
 		output_str.append("\n");
 	}
