@@ -354,6 +354,60 @@ bool ranged_attack::handle_phase_hit()
     return true;
 }
 
+int ranged_attack::calc_brand_damage()
+{
+	int result = 0;
+	special_missile_type missile_brand = get_ammo_brand(*projectile);
+	brand_type brand = get_weapon_brand(*weapon);
+
+	//No stacking projectile effects
+	if (projectile->base_type == OBJ_MISSILES
+		&& missile_brand != SPMSL_NORMAL
+		&& missile_brand != SPMSL_PENETRATION
+		&& (brand == SPWPN_FLAMING
+		|| brand == SPWPN_FREEZING
+		|| brand == SPWPN_HOLY_WRATH
+		|| brand == SPWPN_ELECTROCUTION
+		|| brand == SPWPN_VENOM
+		|| brand == SPWPN_CHAOS))
+	{
+		switch (brand)
+		{
+		case SPWPN_FLAMING:
+		case SPWPN_FREEZING:
+			result = random2(damage_done) / 2 + 1;
+			break;
+		case SPWPN_ELECTROCUTION:
+			result = one_chance_in(3) ? 8 + random2(13) : 0;
+			break;
+		case SPWPN_HOLY_WRATH:
+			result = 1 + (random2(damage_done * 15) / 10);
+			break;
+		}
+	}
+	else
+	{
+		switch (missile_brand)
+		{
+		case SPMSL_FLAME:
+		case SPMSL_FROST:
+			result = random2(damage_done) / 2 + 1;
+			break;
+		case SPMSL_SILVER:
+			result = damage_done * 3 / 4;
+			break;
+		case SPMSL_EXPLODING:
+			result = dice_def(2, 5).roll();
+			break;
+		default:
+			break;
+		}
+	}
+	return result;
+
+}
+
+
 bool ranged_attack::using_weapon()
 {
     return weapon

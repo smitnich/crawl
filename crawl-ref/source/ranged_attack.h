@@ -17,6 +17,7 @@ public:
 
     int calc_to_hit(bool random) override;
 	int calc_raw_damage() override;
+	int calc_brand_damage();
 
     // Applies attack damage and other effects.
     bool attack();

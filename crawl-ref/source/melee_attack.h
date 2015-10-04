@@ -49,6 +49,7 @@ public:
     static void chaos_affect_actor(actor *victim);
 
 	int calc_raw_damage() override;
+	int calc_brand_damage();
 
 private:
     /* Attack phases */

@@ -100,7 +100,7 @@ public:
     virtual int calc_to_hit(bool random) = 0;
 
 	virtual int calc_raw_damage() = 0;
-	int calc_brand_damage();
+	virtual int calc_brand_damage() = 0;
 	int test_hit(int to_hit, int ev, bool randomise_ev);
 
     // Exact copies of their melee_attack predecessors
