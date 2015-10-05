@@ -262,7 +262,7 @@ int melee_attack::calc_brand_damage()
 		result = 1 + (random2(damage_done * 15) / 10);
 		break;
 	case SPWPN_PAIN:
-		result = one_chance_in(attacker->skill_rdiv(SK_NECROMANCY) + 1)
+		result = one_chance_in(!attacker->skill_rdiv(SK_NECROMANCY) + 1)
 			? random2(1 + attacker->skill_rdiv(SK_NECROMANCY)) : 0;
 		break;
 	case SPWPN_VORPAL:
@@ -279,7 +279,6 @@ int melee_attack::calc_brand_damage()
 		break;
 	}
 	return result;
-
 }
 
 bool melee_attack::handle_phase_dodged()
