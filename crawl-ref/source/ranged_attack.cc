@@ -363,29 +363,7 @@ int ranged_attack::calc_brand_damage()
 	//No stacking projectile effects
 	if (projectile->base_type == OBJ_MISSILES
 		&& missile_brand != SPMSL_NORMAL
-		&& missile_brand != SPMSL_PENETRATION
-		&& (brand == SPWPN_FLAMING
-		|| brand == SPWPN_FREEZING
-		|| brand == SPWPN_HOLY_WRATH
-		|| brand == SPWPN_ELECTROCUTION
-		|| brand == SPWPN_VENOM
-		|| brand == SPWPN_CHAOS))
-	{
-		switch (brand)
-		{
-		case SPWPN_FLAMING:
-		case SPWPN_FREEZING:
-			result = random2(damage_done) / 2 + 1;
-			break;
-		case SPWPN_ELECTROCUTION:
-			result = one_chance_in(3) ? 8 + random2(13) : 0;
-			break;
-		case SPWPN_HOLY_WRATH:
-			result = 1 + (random2(damage_done * 15) / 10);
-			break;
-		}
-	}
-	else
+		&& missile_brand != SPMSL_PENETRATION)
 	{
 		switch (missile_brand)
 		{
@@ -403,8 +381,25 @@ int ranged_attack::calc_brand_damage()
 			break;
 		}
 	}
+	else
+	{
+		switch (brand)
+		{
+		case SPWPN_FLAMING:
+		case SPWPN_FREEZING:
+			result = random2(damage_done) / 2 + 1;
+			break;
+		case SPWPN_ELECTROCUTION:
+			result = one_chance_in(3) ? 8 + random2(13) : 0;
+			break;
+		case SPWPN_HOLY_WRATH:
+			result = 1 + (random2(damage_done * 15) / 10);
+			break;
+		default:
+			break;
+		}
+	}
 	return result;
-
 }
 
 

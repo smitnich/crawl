@@ -763,6 +763,7 @@ double test_weapon_against_monster(const item_def *wep, monster_type mon, int it
 {
 	const monsterentry *data = get_monster_data(mon);
 	const item_def *projectile = nullptr;
+	unique_ptr<attack> attk_ptr;
 	seed_rng(27);
 	if (is_range_weapon(*wep) && projectile_slot != -1)
 		projectile = &you.inv[projectile_slot];
@@ -772,7 +773,7 @@ double test_weapon_against_monster(const item_def *wep, monster_type mon, int it
 	int hits = 0;
 	brand_damage = 0;
 	time_taken = 0;
-	if (is_range_weapon(*wep) || is_throwable(&you,*wep))
+	if (is_range_weapon(*wep) || is_throwable(&you, *wep))
 	{
 		// Treat the projectile as the weapon if it is a throwable item
 		if (is_throwable(&you, *wep))
@@ -780,46 +781,27 @@ double test_weapon_against_monster(const item_def *wep, monster_type mon, int it
 			projectile = wep;
 			wep = nullptr;
 		}
-		for (int i = 0; i < iterations; i++)
-		{
-			ranged_attack attk(&you, &you, (item_def*) projectile, false);
-			int to_hit = attk.calc_to_hit(true);
-			int tmp_damage = attk.calc_raw_damage();
-			tmp_damage = max(0, tmp_damage - random2(1 + ac));
-			attk.damage_done = tmp_damage;
-			int spec_damage = attk.calc_brand_damage();
-			time_taken += you.attack_delay(wep, projectile);
-			if (attk.test_hit(to_hit, ev, false) >= 0)
-			{
-				hits++;
-				if (spec_damage > 0 && wep->brand != SPWPN_VORPAL || projectile->brand != SPMSL_STEEL)
-					brand_damage += spec_damage;
-				else
-					tmp_damage += spec_damage;
-				damage += tmp_damage;
-			}
-		}
+		attk_ptr.reset(new ranged_attack(&you, &you, (item_def*)projectile, false));
 	}
 	else
+		attk_ptr.reset(new melee_attack(&you,nullptr));
+	for (int i = 0; i < iterations; i++)
 	{
-		for (int i = 0; i < iterations; i++)
+		int to_hit = attk_ptr->calc_to_hit(true);
+		int tmp_damage = attk_ptr->calc_raw_damage();
+		tmp_damage = max(0, tmp_damage - random2(1 + ac));
+		attk_ptr->damage_done = tmp_damage;
+		int spec_damage = attk_ptr->calc_brand_damage();
+		time_taken += you.attack_delay(wep, projectile);
+		if (attk_ptr->test_hit(to_hit, ev, false) >= 0)
 		{
-			melee_attack attk(&you, nullptr);
-			int to_hit = attk.calc_to_hit();
-			int tmp_damage = attk.calc_raw_damage();
-			tmp_damage = max(0, tmp_damage - random2(1 + ac));
-			attk.damage_done = tmp_damage;
-			int spec_damage = attk.calc_brand_damage();
-			time_taken += you.attack_delay(wep);
-			if (attk.test_hit(to_hit, ev, false) >= 0)
-			{
-				hits++;
-				damage += tmp_damage;
-				if (spec_damage > 0 && wep->brand != SPWPN_VORPAL)
-					brand_damage += spec_damage;
-				else
-					tmp_damage += spec_damage;
-			}
+			hits++;
+			if (spec_damage > 0 && wep->brand != SPWPN_VORPAL ||
+				(projectile != nullptr && projectile->brand != SPMSL_STEEL))
+				brand_damage += spec_damage;
+			else
+				tmp_damage += spec_damage;
+			damage += tmp_damage;
 		}
 	}
 	time_taken /= (10 * iterations);
@@ -829,43 +811,48 @@ double test_weapon_against_monster(const item_def *wep, monster_type mon, int it
 	return average_damage;
 }
 
-string weapon_sim(const item_def &item, const int slot)
+string weapon_sim(const item_def &item, int slot)
 {
 	const int iterations = 250;
 	int projectile_slot = -1;
-	string header = "";
 	double time_taken = 0.0f;
 	double brand_damage = 0.0f;
 
+	const string invalid_ammo_str = 
+		"\n\nDamage estimates for ranged weapons require valid ammo.\n\n";
+
+	const string short_header = "\n\nDamage Estimates   Eff";
+	const string long_header = short_header + "      Resistable";
+
+	// Abort if the item isn't actually in our inventory or identified
 	if (!in_inventory(item) || !fully_identified(item))
 		return "";
 
+    // Also if its not a valid throwing weapons
 	if (item.base_type == OBJ_MISSILES && !is_throwable(&you, item))
-		return "\n\nTo view damage estimates for ammo, quiver it and select the corresponding weapon.";
+		return "\n\nTo view damage estimates for ammo,"
+		"quiver it and select the corresponding weapon.";
 
 	const unsigned int indent_length[2] = { 22, 16 };
 
 	const vector<monster_type> test_mons = { MONS_NO_DEFENSE_TEST, 
 	MONS_EV_TEST,  MONS_AC_TEST, MONS_DEFENSE_TEST };
 
-	const int orig_slot = you.equip[EQ_WEAPON];
-
-	const item_def *orig_wep = you.weapon();
 	string output_str = "";
 	const brand_type brand = get_weapon_brand(item);
 
-	if (orig_wep != &item)
-		you.equip[EQ_WEAPON] = slot;
+	// Make sure we restore the original weapon on exiting; this overrides
+	// curses etc in order to allow for viewing stats at any point
+	unwind_var<int8_t> orig_weapon_slot(you.equip[EQ_WEAPON], (int8_t) slot);
 
 	if (is_range_weapon(item))
 	{
 		item_def *item_out = nullptr;
-		int slot_out = 0;
 		vector<int> order;
 		you.m_quiver.get_fire_order(order, false);
+		//Nothing to fire, abort
 		if (order.size() == 0)
-			return "";
-		launch_retval launched = LRET_LAUNCHED;
+			return invalid_ammo_str;
 		projectile_slot = you.m_quiver.get_fire_item();
 		item_out = &you.inv[projectile_slot];
 		if (is_launched(&you, &item, *item_out) != LRET_LAUNCHED)
@@ -883,32 +870,33 @@ string weapon_sim(const item_def &item, const int slot)
 		// No missile to be fired, nothing to be done here other than
 		// let the user know
 		if (projectile_slot == -1 || is_launched(&you, &item, *item_out) != LRET_LAUNCHED)
-			return "\n\nDamage estimates for ranged weapons require valid ammo.\n\n";
+			return invalid_ammo_str;
 	}
 
 	special_missile_type ammo = SPMSL_NORMAL;
 	if (projectile_slot != -1)
 		ammo = get_ammo_brand(you.inv[projectile_slot]);
 
+	// All of these brands do resistable damage
 	bool do_resistable = (brand == SPWPN_FLAMING || brand == SPWPN_FREEZING ||
-		brand == SPWPN_HOLY_WRATH || brand == SPWPN_ELECTROCUTION || brand == SPWPN_CHAOS
+		brand == SPWPN_HOLY_WRATH || brand == SPWPN_PAIN || brand == SPWPN_ELECTROCUTION || brand == SPWPN_CHAOS
 		|| brand == SPWPN_FROST || brand == SPWPN_FLAME || ammo == SPMSL_FLAME || ammo == SPMSL_FROST ||
 		ammo == SPMSL_CHAOS);
 	if (do_resistable)
-		header = "\n\nDamage Estimates   Base      Resistable\n";
+		output_str = long_header + "\n";
 	else
-		header = "\n\nDamage Estimates   Eff\n";
-	
-	output_str = header;
-	
+		output_str = short_header + "\n";
+		
 	for (monster_type mt : test_mons) {
 		monsterentry *mon = get_monster_data(mt);
 		string tmp_str, dmg_str;
-		int count = 0;
 		double damage = test_weapon_against_monster(&item, mt,
 		    iterations, projectile_slot, time_taken, brand_damage);
 		tmp_str = mon->name;
 		dmg_str = make_stringf("%.1f", damage);
+		// All of the string handling is kind of a mess due to tabs
+		// not working in the description window, manually append
+		// the necessary number of spaces in order to align properly
 		while (tmp_str.length() + dmg_str.length() < indent_length[0])
 			tmp_str.append(" ");
 		output_str.append(tmp_str);
@@ -923,12 +911,9 @@ string weapon_sim(const item_def &item, const int slot)
 		}
 		output_str.append("\n");
 	}
-
-	if (orig_wep != &item)
-		you.equip[EQ_WEAPON] = orig_slot;
-	//	wield_weapon(true, orig_slot, false, true, false, false, false);
-
-	//seed_rng();
+	output_str.append(make_stringf("\nAverage attack time: %.2f\n", time_taken));
+	// Reseed the rng since it will always be in the same state
+	seed_rng();
 	return output_str;
 }
 #endif
