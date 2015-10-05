@@ -2,7 +2,7 @@
  * @file
  * @brief Wizmode character dump loading
 **/
-
+#ifdef WIZARD
 #include "AppHdr.h"
 
 #include "wiz-dump.h"
@@ -600,3 +600,4 @@ void wizard_load_dump_file()
             canned_msg(MSG_NOTHING_THERE);
     }
 }
+#endif

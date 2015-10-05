@@ -2046,7 +2046,7 @@ string get_item_description(const item_def &item, bool verbose,
     if (verbose && origin_describable(item))
         description << "\n" << origin_desc(item) << ".";
 
-    // This information is obscure and differs per-item, so looking it up in
+	// This information is obscure and differs per-item, so looking it up in
     // a docs file you don't know to exist is tedious. On the other hand,
     // it breaks the screen for people on very small terminals.
     if (verbose && get_number_of_lines() >= 28)
@@ -2058,8 +2058,8 @@ string get_item_description(const item_def &item, bool verbose,
             description << "\nMenu/colouring prefixes: " << menu_prefix;
     }
 
-	if (item.base_type == OBJ_WEAPONS ||
-		item.base_type == OBJ_STAVES  || item.base_type == OBJ_MISSILES)
+	if (!dump && item.base_type == OBJ_WEAPONS ||
+		item.base_type == OBJ_STAVES || item.base_type == OBJ_MISSILES)
 		description << weapon_sim(item, item.link);
 
     return description.str();
@@ -2272,7 +2272,6 @@ static bool _actions_prompt(item_def &item, bool allow_inscribe, bool do_prompt)
     PrecisionMenu menu;
     TextItem* tmp = nullptr;
     MenuFreeform* freeform = new MenuFreeform();
-	item_def *orig_wep;
     menu.set_select_type(PrecisionMenu::PRECISION_SINGLESELECT);
     freeform->init(coord_def(1, 1),
                    coord_def(get_number_of_cols(), get_number_of_lines()),
@@ -2431,8 +2430,6 @@ static bool _actions_prompt(item_def &item, bool allow_inscribe, bool do_prompt)
     const int slot = item.link;
     ASSERT_RANGE(slot, 0, ENDOFPACK);
 
-	int orig_slot = 0;
-
     switch (action)
     {
     case CMD_WIELD_WEAPON:
@@ -2500,7 +2497,7 @@ static bool _actions_prompt(item_def &item, bool allow_inscribe, bool do_prompt)
         _adjust_item(item);
         return false;
 	case CMD_SIMULATE_WEAPON:
-		mprf(weapon_sim(item,slot).data());
+		mprf("%s",weapon_sim(item,slot).data());
 		return true;
     case CMD_NO_CMD:
     default:

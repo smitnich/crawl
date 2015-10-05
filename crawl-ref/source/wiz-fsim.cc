@@ -758,7 +758,9 @@ void wizard_fight_sim(bool double_scale)
     mpr("Done.");
 }
 
-double test_weapon_against_monster(const item_def *wep, monster_type mon, int iterations,
+#endif
+
+double _test_weapon_against_monster(const item_def *wep, monster_type mon, int iterations,
 	                               int projectile_slot, double &time_taken, double &brand_damage)
 {
 	const monsterentry *data = get_monster_data(mon);
@@ -871,6 +873,7 @@ string weapon_sim(const item_def &item, int slot)
 		// let the user know
 		if (projectile_slot == -1 || is_launched(&you, &item, *item_out) != LRET_LAUNCHED)
 			return invalid_ammo_str;
+		output_str = make_stringf("\nUsing %s as ammo.", item_out->name(DESC_PLAIN).c_str());
 	}
 
 	special_missile_type ammo = SPMSL_NORMAL;
@@ -883,14 +886,14 @@ string weapon_sim(const item_def &item, int slot)
 		|| brand == SPWPN_FROST || brand == SPWPN_FLAME || ammo == SPMSL_FLAME || ammo == SPMSL_FROST ||
 		ammo == SPMSL_CHAOS);
 	if (do_resistable)
-		output_str = long_header + "\n";
+		output_str += long_header + "\n";
 	else
-		output_str = short_header + "\n";
+		output_str += short_header + "\n";
 		
 	for (monster_type mt : test_mons) {
 		monsterentry *mon = get_monster_data(mt);
 		string tmp_str, dmg_str;
-		double damage = test_weapon_against_monster(&item, mt,
+		double damage = _test_weapon_against_monster(&item, mt,
 		    iterations, projectile_slot, time_taken, brand_damage);
 		tmp_str = mon->name;
 		dmg_str = make_stringf("%.1f", damage);
@@ -916,4 +919,3 @@ string weapon_sim(const item_def &item, int slot)
 	seed_rng();
 	return output_str;
 }
-#endif
