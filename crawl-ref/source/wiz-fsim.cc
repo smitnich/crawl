@@ -816,6 +816,8 @@ double _test_weapon_against_monster(const item_def *wep, monster_type mon, int i
 
 string weapon_sim(const item_def &item, int slot)
 {
+	if (!you.can_wield(item))
+		return "";
 	const int iterations = 250;
 	int projectile_slot = -1;
 	double time_taken = 0.0f;
