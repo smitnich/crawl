@@ -799,7 +799,8 @@ double _test_weapon_against_monster(const item_def *wep, monster_type mon, int i
 		{
 			hits++;
 			if (spec_damage > 0 && wep->brand != SPWPN_VORPAL ||
-				(projectile != nullptr && projectile->brand != SPMSL_STEEL))
+				(projectile != nullptr && projectile->brand != SPMSL_STEEL
+				&& projectile->brand != SPMSL_NORMAL))
 				brand_damage += spec_damage;
 			else
 				tmp_damage += spec_damage;

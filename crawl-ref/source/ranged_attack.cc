@@ -395,6 +395,9 @@ int ranged_attack::calc_brand_damage()
 		case SPWPN_HOLY_WRATH:
 			result = 1 + (random2(damage_done * 15) / 10);
 			break;
+		case SPWPN_VORPAL:
+			result = 1 + random2(damage_done) / 3;
+			break;
 		default:
 			break;
 		}
