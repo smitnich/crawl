@@ -824,7 +824,7 @@ string weapon_sim(const item_def &item, int slot)
 	const string invalid_ammo_str = 
 		"\n\nDamage estimates for ranged weapons require valid ammo.\n\n";
 
-	const string short_header = "\n\nDamage Estimates   Eff";
+	const string short_header = "\n\nDamage Estimates   Basic";
 	const string long_header = short_header + "      Resistable";
 
 	// Abort if the item isn't actually in our inventory or identified
@@ -836,7 +836,7 @@ string weapon_sim(const item_def &item, int slot)
 		return "\n\nTo view damage estimates for ammo,"
 		"quiver it and select the corresponding weapon.";
 
-	const unsigned int indent_length[2] = { 22, 16 };
+	const unsigned int indent_length[2] = { 24, 16 };
 
 	const vector<monster_type> test_mons = { MONS_NO_DEFENSE_TEST, 
 	MONS_EV_TEST,  MONS_AC_TEST, MONS_DEFENSE_TEST };
@@ -874,7 +874,7 @@ string weapon_sim(const item_def &item, int slot)
 		// let the user know
 		if (projectile_slot == -1 || is_launched(&you, &item, *item_out) != LRET_LAUNCHED)
 			return invalid_ammo_str;
-		output_str = make_stringf("\nUsing %s as ammo.", item_out->name(DESC_PLAIN).c_str());
+		output_str = make_stringf("\n\nUsing %s as ammo.", item_out->name(DESC_PLAIN).c_str());
 	}
 
 	special_missile_type ammo = SPMSL_NORMAL;
