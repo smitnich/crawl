@@ -16,7 +16,7 @@ public:
                   bool teleport, actor *blame = 0);
 
     int calc_to_hit(bool random) override;
-	int calc_raw_damage() override;
+	int calc_raw_damage(int ac) override;
 	int calc_brand_damage();
 
     // Applies attack damage and other effects.

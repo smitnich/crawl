@@ -249,36 +249,49 @@ int melee_attack::calc_brand_damage()
 {
 	int result = 0;
 	brand_type brand = damage_brand == SPWPN_CHAOS ? random_chaos_brand() : damage_brand;
+	if (weapon->base_type == OBJ_STAVES && !player_mutation_level(MUT_NO_ARTIFICE))
+	{
+		switch (weapon->sub_type)
+		{
+		case STAFF_AIR:
+			return staff_damage(SK_AIR_MAGIC);
+			break;
+		case STAFF_COLD:
+			return staff_damage(SK_ICE_MAGIC);
+			break;
+		case STAFF_FIRE:
+			return staff_damage(SK_FIRE_MAGIC);
+			break;
+		case STAFF_DEATH:
+			return staff_damage(SK_NECROMANCY);
+		default:
+			return 0;
+		}
+	}
 	switch (brand)
 	{
 	case SPWPN_FLAMING:
 	case SPWPN_FREEZING:
-		result = random2(damage_done) / 2 + 1;
-		break;
+		return random2(damage_done) / 2 + 1;
 	case SPWPN_ELECTROCUTION:
-		result = one_chance_in(3) ? 8 + random2(13) : 0;
-		break;
+		return one_chance_in(3) ? 8 + random2(13) : 0;
 	case SPWPN_HOLY_WRATH:
-		result = 1 + (random2(damage_done * 15) / 10);
-		break;
+		return 1 + (random2(damage_done * 15) / 10);
 	case SPWPN_PAIN:
-		result = one_chance_in(!attacker->skill_rdiv(SK_NECROMANCY) + 1)
+		return one_chance_in(!attacker->skill_rdiv(SK_NECROMANCY) + 1)
 			? random2(1 + attacker->skill_rdiv(SK_NECROMANCY)) : 0;
-		break;
 	case SPWPN_VORPAL:
-		result = 1 + random2(damage_done) / 3;
-		break;
+		return 1 + random2(damage_done) / 3;
 	case SPWPN_DISTORTION:
 		if (one_chance_in(3))
-			result = 1 + random2avg(7, 2);
+			return 1 + random2avg(7, 2);
 		else if (one_chance_in(3))
-			result = 3 + random2avg(24, 2);
+			return 3 + random2avg(24, 2);
 		// Ignore banishment, teleportation etc, they do not inflict any
 		// damage
 	default:
-		break;
+		return 0;
 	}
-	return result;
 }
 
 bool melee_attack::handle_phase_dodged()
@@ -915,7 +928,7 @@ bool melee_attack::attack()
     return attack_occurred;
 }
 
-int melee_attack::calc_raw_damage()
+int melee_attack::calc_raw_damage(int ac)
 {
 	int potential_damage, damage;
 
@@ -934,7 +947,10 @@ int melee_attack::calc_raw_damage()
 
 	damage = max(0, damage);
 
-	damage_done = damage;
+	if (weapon->is_type(OBJ_STAVES, STAFF_EARTH))
+		damage += max(0, staff_damage(SK_EARTH_MAGIC) - random2(ac+1));
+
+	damage_done = damage - random2(ac+1);
 
 	return damage;
 }

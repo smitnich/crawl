@@ -790,8 +790,7 @@ double _test_weapon_against_monster(const item_def *wep, monster_type mon, int i
 	for (int i = 0; i < iterations; i++)
 	{
 		int to_hit = attk_ptr->calc_to_hit(true);
-		int tmp_damage = attk_ptr->calc_raw_damage();
-		tmp_damage = max(0, tmp_damage - random2(1 + ac));
+		int tmp_damage = attk_ptr->calc_raw_damage(ac);
 		attk_ptr->damage_done = tmp_damage;
 		int spec_damage = attk_ptr->calc_brand_damage();
 		time_taken += you.attack_delay(wep, projectile);
@@ -887,7 +886,8 @@ string weapon_sim(const item_def &item, int slot)
 	bool do_resistable = (brand == SPWPN_FLAMING || brand == SPWPN_FREEZING ||
 		brand == SPWPN_HOLY_WRATH || brand == SPWPN_PAIN || brand == SPWPN_ELECTROCUTION || brand == SPWPN_CHAOS
 		|| brand == SPWPN_FROST || brand == SPWPN_FLAME || ammo == SPMSL_FLAME || ammo == SPMSL_FROST ||
-		ammo == SPMSL_CHAOS);
+		ammo == SPMSL_CHAOS || item.base_type == OBJ_STAVES && (item.sub_type == STAFF_AIR || item.sub_type
+		== STAFF_COLD || item.sub_type == STAFF_DEATH || item.sub_type == STAFF_FIRE));
 	if (do_resistable)
 		output_str += long_header + "\n";
 	else

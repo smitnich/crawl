@@ -166,7 +166,7 @@ bool ranged_attack::attack()
     return attack_occurred;
 }
 
-int ranged_attack::calc_raw_damage()
+int ranged_attack::calc_raw_damage(int ac)
 {
 	int potential_damage, damage;
 
@@ -183,7 +183,7 @@ int ranged_attack::calc_raw_damage()
 	damage = player_apply_slaying_bonuses(damage, false);
 	damage = player_apply_final_multipliers(damage);
 
-	damage = max(0, damage);
+	damage = max(0, damage - random2(1+ac));
 
 	return damage;
 }

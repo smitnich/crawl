@@ -99,7 +99,7 @@ public:
     // To-hit is a function of attacker/defender, defined in sub-classes
     virtual int calc_to_hit(bool random) = 0;
 
-	virtual int calc_raw_damage() = 0;
+	virtual int calc_raw_damage(int ac) = 0;
 	virtual int calc_brand_damage() = 0;
 	int test_hit(int to_hit, int ev, bool randomise_ev);
 
