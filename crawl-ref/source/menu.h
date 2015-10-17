@@ -504,6 +504,22 @@ protected:
     vector<int> toggle_keys;
 };
 
+class SpellMenu : public ToggleableMenu
+{
+public:
+    SpellMenu(int _flags = MF_MULTISELECT, bool text_only = true)
+        : ToggleableMenu(_flags, text_only)
+        {
+            level_offsets.resize(10);
+            for (int i = 0; i < 10; i++)
+                level_offsets[i] = 0;
+        }
+    void add_level_offset(int level, int offset);
+protected:
+    virtual int pre_process(int key) override;
+    vector<int> level_offsets;
+};
+
 // This is only tangentially related to menus, but what the heck.
 // Note, column margins start on 1, not 0.
 class column_composer

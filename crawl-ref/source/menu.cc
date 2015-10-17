@@ -2148,6 +2148,19 @@ int ToggleableMenu::pre_process(int key)
     return key;
 }
 
+int SpellMenu::pre_process(int key)
+{
+    // If the user entered a numeric digit, scroll to the first spell
+    // of that level (or back to the start if there is none)
+    if (isadigit(key))
+    {
+        int offset = key - '0';
+        first_entry = level_offsets[offset];
+        return CK_REDRAW;
+    }
+    return key;
+}
+
 /**
  * Performs regular rectangular AABB intersection between the given AABB
  * rectangle and a item in the menu_entries

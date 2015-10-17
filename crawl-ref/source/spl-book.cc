@@ -573,6 +573,11 @@ static bool _sort_mem_spells(spell_type a, spell_type b)
     return strcasecmp(spell_title(a), spell_title(b)) < 0;
 }
 
+void SpellMenu::add_level_offset(int level, int offset)
+{
+        level_offsets[level] = offset;
+}
+
 vector<spell_type> get_mem_spell_list(vector<int> &books)
 {
     vector<spell_type> spells;
@@ -607,7 +612,7 @@ static spell_type _choose_mem_spell(spell_list &spells,
     const bool text_only = true;
 #endif
 
-    ToggleableMenu spell_menu(MF_SINGLESELECT | MF_ANYPRINTABLE
+    SpellMenu spell_menu(MF_SINGLESELECT | MF_ANYPRINTABLE
                     | MF_ALWAYS_SHOW_MORE | MF_ALLOW_FORMATTING,
                     text_only);
 #ifdef USE_TILE_LOCAL
@@ -664,7 +669,14 @@ static spell_type _choose_mem_spell(spell_list &spells,
     // Tiles menus get this information in the title.
     more_str += "   Toggle display with '<w>!</w>'";
 #endif
-
+    // Tiles has the extra menu item showing the headers
+    // so we need to offset our menu entry values when setting up the
+    // offsets of each spell level
+#ifdef USE_TILE
+    int offset = 1;
+#else
+    int offset = 0;
+#endif
     spell_menu.set_more(formatted_string::parse_string(more_str));
 
     // Don't make a menu so tall that we recycle hotkeys on the same page.
@@ -673,11 +685,15 @@ static spell_type _choose_mem_spell(spell_list &spells,
     {
         spell_menu.set_maxpagesize(52);
     }
-
+    int max_level = 0;
     for (unsigned int i = 0; i < spells.size(); i++)
     {
         const spell_type spell = spells[i];
-
+        if (spell_difficulty(spell) > max_level)
+        {
+            spell_menu.add_level_offset(spell_difficulty(spell), i + offset);
+            max_level = spell_difficulty(spell);
+        }
         ostringstream desc;
 
         int colour = LIGHTGRAY;
