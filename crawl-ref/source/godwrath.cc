@@ -78,6 +78,7 @@ static const char *_god_wrath_adjectives[] =
     "greed",            // Gozag (unused)
     "adversity",        // Qazlal
     "disappointment",   // Ru
+	"minor annoyance",  // Hai
 };
 COMPILE_CHECK(ARRAYSZ(_god_wrath_adjectives) == NUM_GODS);
 
@@ -1699,6 +1700,13 @@ static bool _qazlal_retribution()
     return true;
 }
 
+// Call down the wrath of Hai upon the player!
+// Who knows what this will do.
+static bool _hai_retribution()
+{
+	return true;
+}
+
 bool divine_retribution(god_type god, bool no_bonus, bool force)
 {
     ASSERT(god != GOD_NO_GOD);
@@ -1742,6 +1750,7 @@ bool divine_retribution(god_type god, bool no_bonus, bool force)
     case GOD_CHEIBRIADOS:   do_more = _cheibriados_retribution(); break;
     case GOD_DITHMENOS:     do_more = _dithmenos_retribution(); break;
     case GOD_QAZLAL:        do_more = _qazlal_retribution(); break;
+	case GOD_HAI:           do_more = _hai_retribution(); break;
 
     case GOD_ASHENZARI:
     case GOD_GOZAG:

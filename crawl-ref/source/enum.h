@@ -374,6 +374,9 @@ enum ability_type
     ABIL_RU_POWER_LEAP,
     ABIL_RU_APOCALYPSE,
 
+	// Hai
+	ABIL_HAI_TRANSFORM = 1210,
+
     ABIL_RU_SACRIFICE_PURITY,
         ABIL_FIRST_SACRIFICE = ABIL_RU_SACRIFICE_PURITY,
     ABIL_RU_SACRIFICE_WORDS,
@@ -1705,6 +1708,7 @@ enum dungeon_feature_type
     DNGN_ALTAR_GOZAG,
     DNGN_ALTAR_QAZLAL,
     DNGN_ALTAR_RU,
+	DNGN_ALTAR_HAI,
 
     DNGN_TRAP_SHADOW,
     DNGN_TRAP_SHADOW_DORMANT,
@@ -2162,6 +2166,7 @@ enum god_type
     GOD_GOZAG,
     GOD_QAZLAL,
     GOD_RU,
+	GOD_HAI,
     NUM_GODS,                          // always after last god
 
     GOD_RANDOM = 100,
