@@ -650,6 +650,9 @@ string get_god_likes(god_type which_god, bool verbose)
       likes.emplace_back("you make personal sacrifices");
       break;
 
+	case GOD_HAI:
+		likes.emplace_back("something, probably");
+		break;
     default:
         break;
     }
@@ -929,7 +932,10 @@ string get_god_dislikes(god_type which_god, bool /*verbose*/)
 
     case GOD_DITHMENOS:
         dislikes.emplace_back("you use fiery magic or items");
-        break;
+		break;
+
+	case GOD_HAI:
+		dislikes.emplace_back("Comcast");
 
     default:
         break;
@@ -2043,6 +2049,7 @@ string god_name(god_type which_god, bool long_name)
     case GOD_GOZAG:         return "Gozag";
     case GOD_QAZLAL:        return "Qazlal";
     case GOD_RU:            return "Ru";
+	case GOD_HAI:           return "Hai";
     case GOD_JIYVA: // This is handled at the beginning of the function
     case GOD_ECUMENICAL:    return "an unknown god";
     case NUM_GODS:          return "Buggy";
@@ -4081,7 +4088,8 @@ void handle_god_time(int /*time_delta*/)
         case GOD_BEOGH:
         case GOD_LUGONU:
         case GOD_DITHMENOS:
-        case GOD_QAZLAL:
+		case GOD_QAZLAL:		
+		case GOD_HAI:
             if (one_chance_in(16))
                 lose_piety(1);
             break;
@@ -4181,6 +4189,7 @@ int god_colour(god_type god) // mv - added
     case GOD_ASHENZARI:
         return LIGHTRED;
 
+	case GOD_HAI:
     case GOD_GOZAG:
     case GOD_XOM:
         return YELLOW;
@@ -4245,6 +4254,7 @@ colour_t god_message_altar_colour(god_type god)
     case GOD_FEDHAS:
         return coinflip() ? BROWN : GREEN;
 
+	case GOD_HAI:
     case GOD_XOM:
         return random2(15) + 1;
 

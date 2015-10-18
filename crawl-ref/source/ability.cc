@@ -204,7 +204,10 @@ ability_type god_abilities[NUM_GODS][MAX_GOD_ABILITIES] =
       ABIL_NON_ABILITY, ABIL_QAZLAL_DISASTER_AREA },
     // Ru
     { ABIL_NON_ABILITY, ABIL_NON_ABILITY, ABIL_RU_DRAW_OUT_POWER,
-      ABIL_RU_POWER_LEAP, ABIL_RU_APOCALYPSE }
+      ABIL_RU_POWER_LEAP, ABIL_RU_APOCALYPSE },
+    // Hai
+	  { ABIL_NON_ABILITY, ABIL_NON_ABILITY, ABIL_NON_ABILITY,
+	ABIL_NON_ABILITY, ABIL_NON_ABILITY }
 };
 
 // The description screen was way out of date with the actual costs.
@@ -475,6 +478,9 @@ static const ability_def Ability_List[] =
       6, 0, 0, 6, abflag::NONE },
     { ABIL_QAZLAL_DISASTER_AREA, "Disaster Area", 7, 0, 0,
       generic_cost::range(10, 14), abflag::NONE },
+
+    // Hai
+	{ ABIL_HAI_TRANSFORM, "Transform", 0, 0, 0, 10, abflag::NONE },
 
     { ABIL_STOP_RECALL, "Stop Recall", 0, 0, 0, 0, abflag::NONE },
     { ABIL_RENOUNCE_RELIGION, "Renounce Religion", 0, 0, 0, 0, abflag::NONE },
@@ -1122,6 +1128,10 @@ talent get_talent(ability_type ability, bool check_confused)
         invoc = true;
         failure = 60 - (you.piety / 20) - you.skill(SK_EVOCATIONS, 5);
         break;
+
+	case ABIL_HAI_TRANSFORM:
+		failure = 0;
+		break;
 
     case ABIL_RENOUNCE_RELIGION:
     case ABIL_CONVERT_TO_BEOGH:
@@ -2886,6 +2896,10 @@ static spret_type _do_ability(const ability_def& abil, bool fail)
             return SPRET_ABORT;
         you.increase_duration(DUR_EXHAUSTED, 30 + random2(20));
         break;
+
+	case ABIL_HAI_TRANSFORM:
+		transform(200, TRAN_DRAGON, true);
+		break;
 
     case ABIL_RENOUNCE_RELIGION:
         fail_check();

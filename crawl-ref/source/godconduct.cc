@@ -446,6 +446,8 @@ static peeve_map divine_peeves[] =
     peeve_map(),
     // GOD_RU,
     peeve_map(),
+	// GOD_HAI
+	peeve_map(),
 };
 
 
@@ -834,6 +836,13 @@ static like_map divine_likes[] =
             }
         } },
     },
+	// GOD_HAI,
+	{
+		{ DID_KILL_LIVING, KILL_LIVING_RESPONSE },
+		{ DID_KILL_UNDEAD, KILL_UNDEAD_RESPONSE },
+		{ DID_KILL_DEMON, KILL_DEMON_RESPONSE },
+		{ DID_KILL_HOLY, KILL_HOLY_RESPONSE },
+	},
 };
 
 /**
