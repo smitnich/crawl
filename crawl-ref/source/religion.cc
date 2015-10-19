@@ -366,6 +366,14 @@ const char* god_gain_power_messages[NUM_GODS][MAX_GOD_ABILITIES] =
       "gather your power into a mighty leap",
       "wreak a terrible wrath on your foes"
     },
+	// Hai
+	{
+		"power 1",
+		"power 2",
+		"power 3",
+		"power 4",
+		"power 5"
+	}
 };
 
 /**

@@ -206,7 +206,7 @@ ability_type god_abilities[NUM_GODS][MAX_GOD_ABILITIES] =
     { ABIL_NON_ABILITY, ABIL_NON_ABILITY, ABIL_RU_DRAW_OUT_POWER,
       ABIL_RU_POWER_LEAP, ABIL_RU_APOCALYPSE },
     // Hai
-	  { ABIL_NON_ABILITY, ABIL_NON_ABILITY, ABIL_NON_ABILITY,
+	  { ABIL_HAI_TRANSFORM, ABIL_NON_ABILITY, ABIL_NON_ABILITY,
 	ABIL_NON_ABILITY, ABIL_NON_ABILITY }
 };
 
@@ -1130,6 +1130,7 @@ talent get_talent(ability_type ability, bool check_confused)
         break;
 
 	case ABIL_HAI_TRANSFORM:
+		invoc = true;
 		failure = 0;
 		break;
 
@@ -2898,7 +2899,10 @@ static spret_type _do_ability(const ability_def& abil, bool fail)
         break;
 
 	case ABIL_HAI_TRANSFORM:
-		transform(200, TRAN_DRAGON, true);
+		if (transform(200, TRAN_DRAGON, true))
+		{
+			//you.set_duration(DUR_TRANSFORMATION, 1);
+		}
 		break;
 
     case ABIL_RENOUNCE_RELIGION:
@@ -3223,8 +3227,8 @@ vector<talent> your_talents(bool check_confused, bool include_unusable)
     if (player_mutation_level(MUT_HURL_HELLFIRE))
         _add_talent(talents, ABIL_HELLFIRE, check_confused);
 
-    if (you.duration[DUR_TRANSFORMATION] && !you.transform_uncancellable)
-        _add_talent(talents, ABIL_END_TRANSFORMATION, check_confused);
+	if (you.duration[DUR_TRANSFORMATION] && !you.transform_uncancellable)
+			_add_talent(talents, ABIL_END_TRANSFORMATION, check_confused);
 
     if (player_mutation_level(MUT_BLINK))
         _add_talent(talents, ABIL_BLINK, check_confused);

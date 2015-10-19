@@ -875,7 +875,8 @@ static void _describe_transform(status_info* inf)
     inf->long_text = form->get_description();
 
     const bool vampbat = (you.species == SP_VAMPIRE && you.form == TRAN_BAT);
-    const bool expire  = dur_expiring(DUR_TRANSFORMATION) && !vampbat;
+	const bool hai = (you_worship(GOD_HAI));
+    const bool expire  = dur_expiring(DUR_TRANSFORMATION) && (!vampbat || !hai);
 
     inf->light_colour = _dur_colour(GREEN, expire);
     _mark_expiring(inf, expire);
