@@ -206,8 +206,8 @@ ability_type god_abilities[NUM_GODS][MAX_GOD_ABILITIES] =
     { ABIL_NON_ABILITY, ABIL_NON_ABILITY, ABIL_RU_DRAW_OUT_POWER,
       ABIL_RU_POWER_LEAP, ABIL_RU_APOCALYPSE },
     // Hai
-	  { ABIL_HAI_TRANSFORM, ABIL_NON_ABILITY, ABIL_NON_ABILITY,
-	ABIL_NON_ABILITY, ABIL_NON_ABILITY }
+	  { ABIL_HAI_TRANSFORM_SPIDER, ABIL_HAI_TRANSFORM_ICE, ABIL_HAI_TRANSFORM_BLADES,
+	ABIL_HAI_TRANSFORM_STATUE, ABIL_HAI_TRANSFORM_DRAGON }
 };
 
 // The description screen was way out of date with the actual costs.
@@ -480,7 +480,11 @@ static const ability_def Ability_List[] =
       generic_cost::range(10, 14), abflag::NONE },
 
     // Hai
-	{ ABIL_HAI_TRANSFORM, "Transform", 0, 0, 0, 10, abflag::NONE },
+	{ ABIL_HAI_TRANSFORM_SPIDER, "Arachnid Form", 0, 0, 0, 10, abflag::NONE },
+	{ ABIL_HAI_TRANSFORM_ICE, "Glacial Form", 0, 0, 0, 10, abflag::NONE },
+	{ ABIL_HAI_TRANSFORM_BLADES, "Sword Form", 0, 0, 0, 10, abflag::NONE },
+	{ ABIL_HAI_TRANSFORM_STATUE, "Stone Form", 0, 0, 0, 10, abflag::NONE },
+	{ ABIL_HAI_TRANSFORM_DRAGON, "Draconic Form", 0, 0, 0, 10, abflag::NONE },
 
     { ABIL_STOP_RECALL, "Stop Recall", 0, 0, 0, 0, abflag::NONE },
     { ABIL_RENOUNCE_RELIGION, "Renounce Religion", 0, 0, 0, 0, abflag::NONE },
@@ -1129,7 +1133,11 @@ talent get_talent(ability_type ability, bool check_confused)
         failure = 60 - (you.piety / 20) - you.skill(SK_EVOCATIONS, 5);
         break;
 
-	case ABIL_HAI_TRANSFORM:
+	case ABIL_HAI_TRANSFORM_SPIDER:
+	case ABIL_HAI_TRANSFORM_ICE:
+	case ABIL_HAI_TRANSFORM_BLADES:
+	case ABIL_HAI_TRANSFORM_STATUE:
+	case ABIL_HAI_TRANSFORM_DRAGON:
 		invoc = true;
 		failure = 0;
 		break;
@@ -2898,11 +2906,29 @@ static spret_type _do_ability(const ability_def& abil, bool fail)
         you.increase_duration(DUR_EXHAUSTED, 30 + random2(20));
         break;
 
-	case ABIL_HAI_TRANSFORM:
-		if (transform(200, TRAN_DRAGON, true))
-		{
-			//you.set_duration(DUR_TRANSFORMATION, 1);
-		}
+	case ABIL_HAI_TRANSFORM_SPIDER:
+		untransform(true);
+		transform(200, TRAN_SPIDER);
+		break;
+
+	case ABIL_HAI_TRANSFORM_ICE:
+		untransform(true);
+		transform(200, TRAN_ICE_BEAST);
+		break;
+
+	case ABIL_HAI_TRANSFORM_BLADES:
+		untransform(true);
+		transform(200, TRAN_BLADE_HANDS);
+		break;
+
+	case ABIL_HAI_TRANSFORM_STATUE:
+		untransform(true);
+		transform(200, TRAN_STATUE);
+		break;
+
+	case ABIL_HAI_TRANSFORM_DRAGON:
+		untransform(true);
+		transform(200, TRAN_DRAGON);
 		break;
 
     case ABIL_RENOUNCE_RELIGION:

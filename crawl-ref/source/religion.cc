@@ -519,6 +519,13 @@ const char* god_lose_power_messages[NUM_GODS][MAX_GOD_ABILITIES] =
       "gather your power into a mighty leap",
       "wreak a terrible wrath on all visible foes"
     },
+	// Hai
+	{ "turn into a spider",
+	  "turn into an ice beast",
+	  "turn your hands to blades",
+	  "turn into a statue",
+	  "turn into a dragon"
+	}
 };
 
 static void _place_delayed_monsters();
