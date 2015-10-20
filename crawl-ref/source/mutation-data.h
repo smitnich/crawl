@@ -2161,4 +2161,15 @@ static const mutation_def mut_data[] =
 
    "temperature sensitivity (rF-, rC-)",
 },
+
+{ MUT_STATUE_TORMENT_RESIST, 0, 1, mutflag::FORM, false,
+"resist torment",
+
+{ "You resist unholy torment.", "", "" },
+{ "", "", "" },
+{ "", "", "" },
+
+"temperature sensitivity (rF-, rC-)",
+},
+
 };

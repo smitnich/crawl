@@ -2014,6 +2014,13 @@ bool transform(int pow, transformation_type which_trans, bool involuntary,
         move_player_to_grid(you.pos(), false);
     }
 
+	const form_entry form_d = _find_form_entry(which_trans);
+
+	for (mutation_type mut : form_d.muts)
+	{
+		mutate(mut,"",false,true);
+	}
+
     if (you.hp <= 0)
     {
         ouch(0, KILLED_BY_FRAILTY, MID_NOBODY,
@@ -2133,6 +2140,13 @@ void untransform(bool skip_move)
         mprf(MSGCH_DURATION, "%s cracks your icy armour.",
              armour->name(DESC_YOUR).c_str());
     }
+
+	const form_entry form_d = _find_form_entry(old_form);
+
+	for (mutation_type mut : form_d.muts)
+	{
+		delete_mutation(mut, "", false, true);
+	}
 
     if (hp_downscale != 10 && you.hp != you.hp_max)
     {

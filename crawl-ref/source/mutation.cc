@@ -78,10 +78,11 @@ enum class mutflag
     QAZLAL  = 1 << 3, // qazlal wrath
     XOM     = 1 << 4, // xom being xom
     CORRUPT = 1 << 5, // wretched stars
+	FORM    = 1 << 6, // Transmutations
 
-    LAST    = CORRUPT
+    LAST    = FORM
 };
-DEF_BITFIELD(mutflags, mutflag, 5);
+DEF_BITFIELD(mutflags, mutflag, 6);
 COMPILE_CHECK(mutflags::exponent(mutflags::last_exponent) == mutflag::LAST);
 
 #include "mutation-data.h"
