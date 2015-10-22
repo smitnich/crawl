@@ -348,7 +348,7 @@ void expose_player_to_element(beam_type flavour, int strength, bool slow_cold_bl
     qazlal_element_adapt(flavour, strength);
 
     if (flavour == BEAM_COLD && slow_cold_blooded
-        && player_mutation_level(MUT_COLD_BLOODED)
+		&& (player_mutation_level(MUT_COLD_BLOODED) || player_mutation_level(MUT_FORM_COLD_BLOODED))
         && you.res_cold() <= 0 && coinflip())
     {
         you.slow_down(0, strength);

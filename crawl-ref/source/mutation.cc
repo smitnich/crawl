@@ -1280,6 +1280,7 @@ bool mutate(mutation_type which_mutation, const string &reason, bool failMsg,
 
             xom_is_stimulated(50);
             return true;
+		case MUTCLASS_FORM:
         case MUTCLASS_INNATE:
             // You can't miss out on innate mutations just because you're
             // temporarily undead.
@@ -1873,7 +1874,8 @@ string mutation_desc(mutation_type mut, int level, bool colour,
             const bool demonspawn = (you.species == SP_DEMONSPAWN);
             const bool extra = (you.mutation[mut] > you.innate_mutation[mut]);
 
-            if (fully_inactive || (mut == MUT_COLD_BLOODED && player_res_cold(false) > 0))
+            if (fully_inactive || mut == MUT_COLD_BLOODED
+				&& player_res_cold(false) > 0)
                 colourname = "darkgrey";
             else if (is_sacrifice)
                 colourname = "lightred";

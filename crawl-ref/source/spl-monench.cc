@@ -45,7 +45,8 @@ int englaciate(coord_def where, int pow, int, actor *agent)
         return 0;
     }
 
-    if ((!mons && player_mutation_level(MUT_COLD_BLOODED))
+    if ((!mons && (player_mutation_level(MUT_COLD_BLOODED)
+		|| player_mutation_level(MUT_FORM_COLD_BLOODED)))
         || (mons && mons_class_flag(mons->type, M_COLD_BLOOD)))
     {
         duration *= 2;

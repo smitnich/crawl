@@ -1050,6 +1050,18 @@ public:
 
 };
 
+class FormSalamander : public Form
+{
+private:
+	FormSalamander() : Form(TRAN_SALAMANDER) { }
+	DISALLOW_COPY_AND_ASSIGN(FormSalamander);
+public:
+	static const FormSalamander &instance() { static FormSalamander inst; return inst; }
+
+};
+
+
+
 static const Form* forms[] =
 {
     &FormNone::instance(),
@@ -1074,6 +1086,7 @@ static const Form* forms[] =
     &FormFungus::instance(),
     &FormShadow::instance(),
     &FormHydra::instance(),
+	&FormSalamander::instance(),
 };
 
 const Form* get_form(transformation_type form)
@@ -2018,7 +2031,7 @@ bool transform(int pow, transformation_type which_trans, bool involuntary,
 
 	for (mutation_type mut : form_d.muts)
 	{
-		mutate(mut,"",false,true);
+		mutate(mut, "", false, true, false, true, MUTCLASS_FORM, true);
 	}
 
     if (you.hp <= 0)
@@ -2029,7 +2042,7 @@ bool transform(int pow, transformation_type which_trans, bool involuntary,
     }
 
     return true;
-}
+} 
 
 /**
  * End the player's transformation and return them to their normal

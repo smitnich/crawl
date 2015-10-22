@@ -259,6 +259,17 @@ static const form_entry formdata[] =
     FC_DEFAULT, FC_ENABLE, FC_ENABLE, true, false,
 	"roar", 4, "foreclaw", "", "bow your heads before", "flesh",
 	{}
-}
+},
+{
+	TRAN_SALAMANDER, MONS_SALAMANDER, "Salamander", "salamander-form", "salamander",
+	"a humanoid salamander.",
+	EQF_NONE, MR_NO_FLAGS,
+	FormDuration(10, PS_SINGLE, 100), 0, 0, SIZE_CHARACTER, 10, 5,
+	0, 0, 0, true, 0, 0, 3,
+	SPWPN_NORMAL, GREEN, "", DEFAULT_VERBS,
+	FC_DEFAULT, FC_ENABLE, FC_ENABLE, true, true,
+	"hiss", 4, "", "", "", "flesh",
+	{ MUT_FORM_COLD_BLOODED, MUT_FORM_CONSTRICTION, MUT_FORM_FIRE_RES }
+	},
 };
 COMPILE_CHECK(ARRAYSZ(formdata) == NUM_TRANSFORMS);

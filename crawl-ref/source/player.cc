@@ -2075,6 +2075,8 @@ int player_speed()
 // less than minact.
 static int _mut_level(mutation_type mut, mutation_activity_type minact)
 {
+	if (mut == MUT_NON_MUTATION)
+		return 0;
     const int mlevel = you.mutation[mut];
 
     const mutation_activity_type active = mutation_activity_level(mut);
@@ -2085,11 +2087,26 @@ static int _mut_level(mutation_type mut, mutation_activity_type minact)
     return 0;
 }
 
+mutation_type _check_form_mutations(mutation_type mut)
+{
+	switch (mut) {
+	case MUT_HEAT_RESISTANCE:
+		return MUT_FORM_FIRE_RES;
+	case MUT_CONSTRICTING_TAIL:
+		return MUT_FORM_CONSTRICTION;
+	case MUT_COLD_BLOODED:
+		return MUT_FORM_COLD_BLOODED;
+	default:
+		return MUT_NON_MUTATION;
+	}
+}
+
 // Output level of player mutation. If temp is true (the default), take into
 // account the suppression of mutations by changes of form.
 int player_mutation_level(mutation_type mut, bool temp)
 {
-    return _mut_level(mut, temp ? MUTACT_PARTIAL : MUTACT_INACTIVE);
+	return max(_mut_level(_check_form_mutations(mut), temp ? MUTACT_PARTIAL : MUTACT_INACTIVE),
+		_mut_level(mut, temp ? MUTACT_PARTIAL : MUTACT_INACTIVE));
 }
 
 static int _player_armour_beogh_bonus(const item_def& item)

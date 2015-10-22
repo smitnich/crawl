@@ -24,7 +24,9 @@ enum mutation_permanence_class
     // Normal mutations, permanent unless cured
     MUTCLASS_NORMAL,
     // Innate, permanent traits, like draconian breath
-    MUTCLASS_INNATE
+    MUTCLASS_INNATE,
+	// Mutations that are part of a form
+	MUTCLASS_FORM,
 };
 
 void init_mut_index();

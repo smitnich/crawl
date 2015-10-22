@@ -2169,7 +2169,39 @@ static const mutation_def mut_data[] =
 { "", "", "" },
 { "", "", "" },
 
-"temperature sensitivity (rF-, rC-)",
+"resist torment",
 },
+
+{ MUT_FORM_FIRE_RES, 0, 1, mutflag::FORM, false,
+"fire resistance",
+
+{ "Your form is resistant to fire.", "", "" },
+   {"", "", "" },
+   { "", "", "" },
+
+   "resist fire",
+},
+
+{ MUT_FORM_CONSTRICTION, 0, 1, mutflag::FORM, false,
+"constriction",
+
+{ "Your form may constrict your foes.", "", "" },
+{ "", "", "" },
+{ "", "", "" },
+
+"constriction",
+},
+
+
+{ MUT_FORM_COLD_BLOODED, 0, 1, mutflag::FORM, false,
+  "cold-blooded",
+
+  { "Your form may be slowed by cold..", "", "" },
+  { "", "", "" },
+  { "", "", "" },
+
+  "cold-blooded",
+  },
+
 
 };
