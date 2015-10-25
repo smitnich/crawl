@@ -924,7 +924,7 @@ int player_likes_chunks(bool permanently = false);
 bool player_likes_water(bool permanently = false);
 bool player_likes_lava(bool permanently = false);
 
-int player_mutation_level(mutation_type mut, bool temp = true);
+int player_mutation_level(mutation_type mut, bool temp = true, bool transform = true);
 
 int player_res_electricity(bool calc_unid = true, bool temp = true,
                            bool items = true);

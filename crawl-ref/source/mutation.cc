@@ -916,7 +916,7 @@ int mut_check_conflict(mutation_type mut, bool innate_only)
            = static_cast<mutation_type>(confl[0] == mut ? confl[1] : confl[0]);
 
         const int level = innate_only ? you.innate_mutation[confl_mut]
-                                      : player_mutation_level(confl_mut);
+                                      : player_mutation_level(confl_mut, true, false);
         if (level)
             return level;
     }

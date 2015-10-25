@@ -477,7 +477,8 @@ void zappy(zap_type z_type, int power, bolt &pbolt)
 
     pbolt.origin_spell = zap_to_spell(z_type);
 
-    if (z_type == ZAP_BREATHE_FIRE && you.species == SP_RED_DRACONIAN)
+    if (z_type == ZAP_BREATHE_FIRE && you.species == SP_RED_DRACONIAN
+		|| z_type == ZAP_BREATHE_FIRE && you.form == TRAN_SALAMANDER)
         pbolt.origin_spell = SPELL_SEARING_BREATH;
 
     if (pbolt.loudness == 0)

@@ -2092,6 +2092,8 @@ mutation_type _check_form_mutations(mutation_type mut)
 	switch (mut) {
 	case MUT_HEAT_RESISTANCE:
 		return MUT_FORM_FIRE_RES;
+	case MUT_BREATHE_FLAMES:
+		return MUT_FORM_FLAME_CLOUD;
 	case MUT_CONSTRICTING_TAIL:
 		return MUT_FORM_CONSTRICTION;
 	case MUT_COLD_BLOODED:
@@ -2103,8 +2105,10 @@ mutation_type _check_form_mutations(mutation_type mut)
 
 // Output level of player mutation. If temp is true (the default), take into
 // account the suppression of mutations by changes of form.
-int player_mutation_level(mutation_type mut, bool temp)
+int player_mutation_level(mutation_type mut, bool temp, bool transform)
 {
+	if (!transform)
+		return _mut_level(mut, temp ? MUTACT_PARTIAL : MUTACT_INACTIVE);
 	return max(_mut_level(_check_form_mutations(mut), temp ? MUTACT_PARTIAL : MUTACT_INACTIVE),
 		_mut_level(mut, temp ? MUTACT_PARTIAL : MUTACT_INACTIVE));
 }

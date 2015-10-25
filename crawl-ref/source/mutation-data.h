@@ -2196,12 +2196,19 @@ static const mutation_def mut_data[] =
 { MUT_FORM_COLD_BLOODED, 0, 1, mutflag::FORM, false,
   "cold-blooded",
 
-  { "Your form may be slowed by cold..", "", "" },
+  { "Your form may be slowed by cold.", "", "" },
   { "", "", "" },
   { "", "", "" },
 
   "cold-blooded",
   },
 
+  { MUT_FORM_FLAME_CLOUD, 0, 1, mutflag::FORM, false,
+  "breathe clouds",
+  { "You can breathe clouds of flame.", "", "" },
+  { "", "", "" },
+  { "", "", "" },
+  "breathe clouds",
+  },
 
 };
